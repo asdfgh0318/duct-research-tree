@@ -1,0 +1,584 @@
+{
+  "title": "Duct Structure Test Research Tree",
+  "phases": [
+    {"id": "phase1",        "title": "Phase 1 — Foundation Tests", "color": "#4a9eff"},
+    {"id": "phase1_synth",  "title": "Phase 1 — Synthesis",        "color": "#4a9eff"},
+    {"id": "phase2",        "title": "Phase 2 — Drone Builds",     "color": "#5cd97a"},
+    {"id": "phase2_synth",  "title": "Phase 2 — Synthesis",        "color": "#5cd97a"},
+    {"id": "phase3",        "title": "Phase 3 — Acoustic Materials","color": "#ff9c4a"},
+    {"id": "final",         "title": "Final",                       "color": "#d97aff"}
+  ],
+  "nodes": [
+    {
+      "id": "p1-no-duct-spacing",
+      "phaseId": "phase1",
+      "title": "No-duct motor spacing study",
+      "description": "Vary motor separation on an open (no shroud) test rig and capture acoustic + thrust/efficiency baselines across the spacing sweep. Provides a duct-free reference dataset and feeds the recommended motor spacing for the eventual 1D (one-big-duct) drone.",
+      "type": "test",
+      "status": "planned",
+      "parents": [],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1-single-duct-rig",
+      "phaseId": "phase1",
+      "title": "Pre-manufactured single ducted-fan rig",
+      "description": "Umbrella node for the pre-manufactured single ducted-fan test campaign. The rig sweeps 2 air-gap values × 3 duct heights (6 leaf configurations) to characterize acoustics and performance of an isolated ducted fan.",
+      "type": "test",
+      "status": "planned",
+      "parents": [],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1-ag1-h25",
+      "phaseId": "phase1",
+      "title": "Single duct: 1mm gap, 25mm height",
+      "description": "Run the single ducted-fan rig with a 1mm tip-to-shroud air gap and a 25mm duct height. Record thrust, power, efficiency, and far-field acoustic spectra.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p1-single-duct-rig"],
+      "geometry": {
+        "airGapMm": 1,
+        "ductHeightMm": 25,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1-ag1-h50",
+      "phaseId": "phase1",
+      "title": "Single duct: 1mm gap, 50mm height",
+      "description": "Run the single ducted-fan rig with a 1mm tip-to-shroud air gap and a 50mm duct height. Record thrust, power, efficiency, and far-field acoustic spectra.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p1-single-duct-rig"],
+      "geometry": {
+        "airGapMm": 1,
+        "ductHeightMm": 50,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1-ag1-h100",
+      "phaseId": "phase1",
+      "title": "Single duct: 1mm gap, 100mm height",
+      "description": "Run the single ducted-fan rig with a 1mm tip-to-shroud air gap and a 100mm duct height. Record thrust, power, efficiency, and far-field acoustic spectra.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p1-single-duct-rig"],
+      "geometry": {
+        "airGapMm": 1,
+        "ductHeightMm": 100,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1-ag3-h25",
+      "phaseId": "phase1",
+      "title": "Single duct: 3mm gap, 25mm height",
+      "description": "Run the single ducted-fan rig with a 3mm tip-to-shroud air gap and a 25mm duct height. Record thrust, power, efficiency, and far-field acoustic spectra.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p1-single-duct-rig"],
+      "geometry": {
+        "airGapMm": 3,
+        "ductHeightMm": 25,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1-ag3-h50",
+      "phaseId": "phase1",
+      "title": "Single duct: 3mm gap, 50mm height",
+      "description": "Run the single ducted-fan rig with a 3mm tip-to-shroud air gap and a 50mm duct height. Record thrust, power, efficiency, and far-field acoustic spectra.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p1-single-duct-rig"],
+      "geometry": {
+        "airGapMm": 3,
+        "ductHeightMm": 50,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1-ag3-h100",
+      "phaseId": "phase1",
+      "title": "Single duct: 3mm gap, 100mm height",
+      "description": "Run the single ducted-fan rig with a 3mm tip-to-shroud air gap and a 100mm duct height. Record thrust, power, efficiency, and far-field acoustic spectra.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p1-single-duct-rig"],
+      "geometry": {
+        "airGapMm": 3,
+        "ductHeightMm": 100,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1-eval-no-duct",
+      "phaseId": "phase1",
+      "title": "Evaluate no-duct spacing data",
+      "description": "Aggregate the no-duct motor spacing sweep and identify the spacing trend that minimizes acoustic emission while preserving thrust/efficiency. Output feeds the 1D motor spacing recommendation.",
+      "type": "synthesis",
+      "status": "planned",
+      "parents": ["p1-no-duct-spacing"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1-eval-duct",
+      "phaseId": "phase1",
+      "title": "Evaluate single-duct (gap × height) data",
+      "description": "Aggregate the 6 single-duct leaf tests and compare acoustic + performance metrics across the (air gap, duct height) grid. Produces a comparative table feeding the duct ranking node.",
+      "type": "synthesis",
+      "status": "planned",
+      "parents": [
+        "p1-ag1-h25",
+        "p1-ag1-h50",
+        "p1-ag1-h100",
+        "p1-ag3-h25",
+        "p1-ag3-h50",
+        "p1-ag3-h100"
+      ],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1s-motor-spacing",
+      "phaseId": "phase1_synth",
+      "title": "Recommended 1D motor spacing",
+      "description": "Synthesize the no-duct spacing study into a single recommended motor separation for the 1D drone build. This value seeds the 1D fabrication and downstream comparisons.",
+      "type": "synthesis",
+      "status": "planned",
+      "parents": ["p1-eval-no-duct"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1s-duct-ranking",
+      "phaseId": "phase1_synth",
+      "title": "Ranked (gap, height) candidates",
+      "description": "Rank the six single-duct (air gap, duct height) candidates by a weighted score of acoustics, thrust, and efficiency. Produces an ordered shortlist consumed by the gap–rod tradeoff decision.",
+      "type": "synthesis",
+      "status": "planned",
+      "parents": ["p1-eval-duct"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p1s-gap-rod-tradeoff",
+      "phaseId": "phase1_synth",
+      "title": "Air gap vs rod count tradeoff",
+      "description": "Resolve the structural/aero tradeoff: a 1mm gap is aerodynamically superior but leaves little room for impact deformation, demanding more reinforcement rods whose drag may erase the aero gain. Locks in the final air gap, baseline duct height, and baseline rod count for both drone builds.",
+      "type": "decision",
+      "status": "planned",
+      "parents": ["p1s-duct-ranking"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p2-4d-build",
+      "phaseId": "phase2",
+      "title": "Build 4D drone (4 ducts)",
+      "description": "Fabricate the four-duct drone variant using the (gap, height, rod count) baseline chosen in Phase 1 synthesis. Acts as the platform for the 4D motor spacing and no-duct comparison tests.",
+      "type": "build",
+      "status": "planned",
+      "parents": ["p1s-gap-rod-tradeoff"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p2-4d-motor-spacing",
+      "phaseId": "phase2",
+      "title": "4D drone motor spacing optimization",
+      "description": "Sweep motor (duct) separation on the 4D drone to find the optimum, which differs from the 1D optimum due to inter-duct aerodynamic and acoustic interaction. Output: best 4D motor spacing for the comparison test.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p2-4d-build"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p2-4d-vs-no-duct",
+      "phaseId": "phase2",
+      "title": "4D drone vs equivalent no-duct drone",
+      "description": "Compare the optimized 4D drone against a same-footprint open-rotor drone using the recommended 1D no-duct spacing. Captures the net acoustic + performance delta attributable to the 4-duct shroud design.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p2-4d-motor-spacing", "p1s-motor-spacing"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p2-1d-build",
+      "phaseId": "phase2",
+      "title": "Build 1D drone (one big duct)",
+      "description": "Fabricate the single-large-duct drone using the Phase 1 baseline (gap, height, rod count) and the recommended no-duct-derived motor spacing. Platform for the 1D duct-height sweep and rod-count study.",
+      "type": "build",
+      "status": "planned",
+      "parents": ["p1s-gap-rod-tradeoff", "p1s-motor-spacing"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p2-1d-height-sweep",
+      "phaseId": "phase2",
+      "title": "1D duct height sweep",
+      "description": "Sweep duct height on the assembled 1D drone and measure the three-way tradeoff between performance, acoustics, and structural weight. Produces a recommended 1D duct height.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p2-1d-build"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p2-1d-rod-count",
+      "phaseId": "phase2",
+      "title": "1D rod count study",
+      "description": "Vary reinforcement-rod count on the 1D drone and measure the tradeoff between added aerodynamic drag and gained structural integrity / crashworthiness. Produces a recommended rod count for the optimized 1D build.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p2-1d-build"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p2s-optimized-builds",
+      "phaseId": "phase2_synth",
+      "title": "Optimized 1D and 4D builds",
+      "description": "Consolidate the 4D comparison, 1D height sweep, and 1D rod-count results into a frozen optimized 1D and 4D drone specification. These become the platforms for Phase 3 acoustic material application.",
+      "type": "synthesis",
+      "status": "planned",
+      "parents": [
+        "p2-4d-vs-no-duct",
+        "p2-1d-height-sweep",
+        "p2-1d-rod-count"
+      ],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p3-material-rig",
+      "phaseId": "phase3",
+      "title": "Single-duct material screening rig",
+      "description": "Reuse the single-duct test rig (around a 6in propeller) with the team's favourite (height, gap, rod count) combo from Phase 2 to screen acoustic materials. Sweeps material types and thicknesses applied inside, outside, or both sides of the duct.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p2s-optimized-builds"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p3-mat-inside",
+      "phaseId": "phase3",
+      "title": "Material variant — inside coating",
+      "description": "Placeholder for a candidate acoustic material applied only to the inner wall of the duct. Vary material type and thickness; the user will branch off additional sub-variants as candidates are chosen.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p3-material-rig"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p3-mat-outside",
+      "phaseId": "phase3",
+      "title": "Material variant — outside coating",
+      "description": "Placeholder for a candidate acoustic material applied only to the outer wall of the duct. Vary material type and thickness; the user will branch off additional sub-variants as candidates are chosen.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p3-material-rig"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p3-mat-sandwich",
+      "phaseId": "phase3",
+      "title": "Material variant — sandwich (inside + outside)",
+      "description": "Placeholder for an inside+outside sandwich treatment of the duct. Vary material type and thickness; the user will branch off additional sub-variants as candidates are chosen.",
+      "type": "test",
+      "status": "planned",
+      "parents": ["p3-material-rig"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": 6,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p3-eval",
+      "phaseId": "phase3",
+      "title": "Evaluate material screening",
+      "description": "Compare inside, outside, and sandwich material treatments across types and thicknesses to pick the best acoustic material configuration. Output feeds the final 1D and 4D applied-material builds.",
+      "type": "synthesis",
+      "status": "planned",
+      "parents": ["p3-mat-inside", "p3-mat-outside", "p3-mat-sandwich"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p3-1d-applied",
+      "phaseId": "phase3",
+      "title": "1D drone with best material applied",
+      "description": "Apply the winning acoustic material/thickness/placement to the optimized 1D drone and run the full performance + acoustic characterization. Verifies the screening result transfers to the full one-big-duct platform.",
+      "type": "build",
+      "status": "planned",
+      "parents": ["p3-eval", "p2s-optimized-builds"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "p3-4d-applied",
+      "phaseId": "phase3",
+      "title": "4D drone with best material applied",
+      "description": "Apply the winning acoustic material/thickness/placement to the optimized 4D drone and run the full performance + acoustic characterization. Verifies the screening result transfers to the four-duct platform.",
+      "type": "build",
+      "status": "planned",
+      "parents": ["p3-eval", "p2s-optimized-builds"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    },
+    {
+      "id": "final-designs",
+      "phaseId": "final",
+      "title": "Characterized 1D + 4D designs",
+      "description": "Final synthesis node: two fully characterized drone designs (1D and 4D) with chosen duct geometry, motor spacing, rod count, and acoustic material treatment. Ready for higher-level integration and publication.",
+      "type": "synthesis",
+      "status": "planned",
+      "parents": ["p3-1d-applied", "p3-4d-applied"],
+      "geometry": {
+        "airGapMm": null,
+        "ductHeightMm": null,
+        "rodCountTop": null,
+        "rodCountBottom": null,
+        "weightG": null,
+        "propellerInches": null,
+        "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    }
+  ]
+}

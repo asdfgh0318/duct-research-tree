@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Research Tree Editor — User Manual</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root {
+    --accent: #4a9eff;
+    --rule: #d6d6d6;
+    --muted: #555;
+    --code-bg: #f3f5f8;
+    --callout-bg: #eef5ff;
+    --table-head: #eef0f3;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    background: white;
+    color: #111;
+    font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.45;
+    margin: 0;
+    padding: 0;
+  }
+  code, kbd, pre, .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 9pt; }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 6px 0 10px;
+  }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+  pre code { background: transparent; padding: 0; }
+  h1, h2, h3, h4 { color: #111; margin: 0 0 6mm 0; line-height: 1.25; }
+  h1 { font-size: 22pt; font-weight: 700; }
+  h2 { font-size: 16pt; font-weight: 700; border-bottom: 2px solid var(--accent); padding-bottom: 3px; margin-top: 0; }
+  h3 { font-size: 14pt; font-weight: 600; color: #1a1a1a; margin-top: 8mm; }
+  h4 { font-size: 12pt; font-weight: 600; color: #2a2a2a; margin-top: 5mm; }
+  p { margin: 0 0 4mm 0; }
+  a { color: var(--accent); text-decoration: none; }
+  ul, ol { margin: 0 0 4mm 5mm; padding: 0; }
+  li { margin: 1mm 0; }
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 6mm 0; }
+
+  .page { page-break-after: always; padding: 0; }
+  .page:last-child { page-break-after: auto; }
+
+  figure {
+    margin: 4mm 0;
+    text-align: center;
+  }
+  figure img {
+    max-width: 170mm;
+    width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: none;
+  }
+  figure .small { max-width: 130mm; }
+  figcaption {
+    font-style: italic;
+    font-size: 9pt;
+    color: var(--muted);
+    margin-top: 2mm;
+  }
+
+  .callout {
+    background: var(--callout-bg);
+    border-left: 3px solid var(--accent);
+    padding: 4mm 6mm;
+    margin: 4mm 0;
+    font-size: 10pt;
+    border-radius: 0 3px 3px 0;
+  }
+  .callout strong { color: #1a3d5e; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 3mm 0 5mm 0;
+    font-size: 10pt;
+  }
+  th, td {
+    border: 1px solid var(--rule);
+    padding: 4px 7px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--table-head); font-weight: 600; }
+  td.mono, th.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 9pt; }
+
+  .cover {
+    height: 100vh;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 0;
+  }
+  .cover .title-block {
+    border-bottom: 4px solid var(--accent);
+    padding-bottom: 6mm;
+    margin-bottom: 8mm;
+  }
+  .cover h1 { font-size: 28pt; margin-bottom: 2mm; }
+  .cover .subtitle { font-size: 14pt; color: #333; margin: 0 0 3mm 0; }
+  .cover .version  { font-size: 10pt; color: var(--muted); font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .cover .blurb { font-size: 11pt; margin-bottom: 6mm; max-width: 160mm; }
+
+  .toc ul { list-style: none; margin-left: 0; padding-left: 0; }
+  .toc li { margin: 1.5mm 0; font-size: 11pt; }
+  .toc .lvl2 { margin-left: 6mm; font-size: 10pt; color: #333; }
+  .toc .num { display: inline-block; min-width: 12mm; color: var(--accent); font-weight: 600; }
+
+  .legend {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+    font-size: 10pt;
+  }
+  .legend li {
+    margin: 1.5mm 0;
+    padding-left: 9mm;
+    text-indent: -9mm;
+  }
+  .legend .num {
+    display: inline-block;
+    width: 6mm;
+    color: var(--accent);
+    font-weight: 700;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  .kbd {
+    border: 1px solid #aaa;
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    padding: 1px 5px;
+    background: #f8f8f8;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 9pt;
+  }
+
+  .anno-svg {
+    display: block;
+    margin: 4mm auto;
+    max-width: 170mm;
+    width: 100%;
+    height: auto;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6mm;
+  }
+  .two-col figure img { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<!-- ====================== 1. COVER ====================== -->
+<section class="page cover">
+  <div class="title-block">
+    <h1>Research Tree Editor</h1>
+    <p class="subtitle">User Manual — Shroud Comparison · Duct Structure Test Program</p>
+    <p class="version">Version 2026-06-08 · single-file HTML editor + git-backed JSON</p>
+  </div>
+  <p class="blurb">
+    This document explains how to view, edit, and version-control the research tree
+    that organises the Shroud Comparison test program. The audience is anyone joining
+    the team mid-flight: no prior knowledge of the codebase is assumed. Read it once
+    end-to-end (about twenty minutes); refer back to specific sections as needed.
+  </p>
+  <figure>
+    <img src="screenshots/01-tree-overview.png" alt="Research tree at default zoom." />
+    <figcaption>The research tree at default zoom. Each column is a depth level; each card is one test, build, synthesis or decision node.</figcaption>
+  </figure>
+</section>
+
+<!-- ====================== 2. TOC ====================== -->
+<section class="page toc">
+  <h2>Table of contents</h2>
+  <ul>
+    <li><span class="num">1</span>What this tool is</li>
+    <li><span class="num">2</span>Getting started</li>
+    <li class="lvl2"><span class="num">2.1</span>Stopping &amp; listing</li>
+    <li><span class="num">3</span>The anatomy of a node</li>
+    <li><span class="num">4</span>Editing a node</li>
+    <li><span class="num">5</span>Adding &amp; connecting nodes</li>
+    <li class="lvl2"><span class="num">5.1</span>Keyboard shortcuts</li>
+    <li><span class="num">6</span>Saving</li>
+    <li><span class="num">7</span>Git workflow</li>
+    <li><span class="num">8</span>Searching</li>
+    <li><span class="num">9</span>Worked example</li>
+    <li><span class="num">10</span>Tree structure reference</li>
+    <li><span class="num">11</span>Adding a new research tree</li>
+    <li><span class="num">12</span>Troubleshooting / FAQ</li>
+    <li><span class="num">13</span>Schema reference</li>
+    <li><span class="num">14</span>Appendix — keyboard shortcuts</li>
+  </ul>
+</section>
+
+<!-- ====================== 1. What this tool is ====================== -->
+<section class="page">
+  <h2>1. What this tool is</h2>
+
+  <p>
+    The research tree is a directed acyclic graph (DAG) that models the duct/shroud
+    test program as a series of dependent steps. Each node is one experiment, one build,
+    one synthesis, or one decision. Edges go left to right and express
+    <em>this node depends on that one</em>.
+  </p>
+
+  <p>
+    Nodes carry only the metadata needed to plan and identify a test: phase, title,
+    description, status, geometry (air gap, duct height, rod counts, weight, propeller
+    size, motor spacing), notes, and a sound-visualizer link. The bulky data — far-field
+    acoustic spectra, thrust curves, efficiency tables — lives in the separate sound
+    visualizer project; this tree only points at it.
+  </p>
+
+  <p>
+    Durable history is provided by git. The single file <code>data.json</code> is the
+    source of truth; every meaningful change should be committed. The editor's
+    <strong>Git</strong> dropdown is just a friendly front-end over the real
+    repository.
+  </p>
+
+  <figure>
+    <img class="small" src="screenshots/01-tree-overview.png" alt="The tree at default zoom." />
+    <figcaption>Tree overview. Columns are depth levels (column = 1 + max depth of parents); rows within a column are sorted by phase then alphabetically.</figcaption>
+  </figure>
+</section>
+
+<!-- ====================== 2. Getting started ====================== -->
+<section class="page">
+  <h2>2. Getting started</h2>
+
+  <p>From a terminal, launch the editor with the project launcher:</p>
+  <pre><code>research_tree -duct</code></pre>
+
+  <p>
+    This starts a tiny Python server on <code>http://127.0.0.1:8123</code> and opens
+    your default browser at that address. The server is bound to localhost only — it
+    is not reachable from the network. The browser tab is the editor.
+  </p>
+
+  <div class="callout">
+    <strong>If you don't have the launcher</strong> on your <code>PATH</code>, you
+    can run the server directly:
+    <pre style="margin-top:2mm"><code>cd /home/adam/ŻYCIE/PRACA/Shroud_Comparison/research_tree
+python3 serve.py --port 8123</code></pre>
+    Then point a Chromium-family browser at <code>http://127.0.0.1:8123/</code>.
+  </div>
+
+  <h3>2.1 Stopping &amp; listing</h3>
+  <table>
+    <thead><tr><th class="mono">Command</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">research_tree -duct</td><td>Start (or reuse) the server and open the browser.</td></tr>
+      <tr><td class="mono">research_tree -duct --stop</td><td>Stop the running server for this tree.</td></tr>
+      <tr><td class="mono">research_tree --list</td><td>List all registered trees, ports, and running state.</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    You can also just open <code>index.html</code> in a browser via the
+    <code>file://</code> protocol — fine for read-only viewing, but the git buttons
+    will be disabled because there's no server backing them.
+  </p>
+</section>
+
+<!-- ====================== 3. Anatomy of a node ====================== -->
+<section class="page">
+  <h2>3. The anatomy of a node</h2>
+
+  <p>
+    Every node on the canvas is a card of fixed size (220&times;130&nbsp;px in CSS).
+    Seven visible elements carry the meaning. The diagram below shows them on a
+    scaled-up mockup of node <code>p1-ag1-h50</code>:
+  </p>
+
+  <!-- Annotated diagram: pure-SVG mockup of a node card (crisp at any print scale). -->
+  <svg class="anno-svg" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+    <!-- Card body -->
+    <rect x="180" y="80" width="560" height="340" rx="10" fill="#1a1f29" stroke="#2a313d" stroke-width="1.2" />
+    <!-- (1) Phase color stripe -->
+    <rect x="180" y="80" width="12" height="340" fill="#4a9eff" />
+    <!-- (2) Title — wraps fully -->
+    <text x="208" y="125" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" fill="#e6ecf2">Single duct: 1mm gap,</text>
+    <text x="208" y="155" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" fill="#e6ecf2">50mm height</text>
+    <!-- (3) Status pill -->
+    <rect x="595" y="100" width="116" height="28" rx="14" fill="#232a36" stroke="#2f3744" stroke-width="1" />
+    <text x="653" y="119" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#9ba6b5" letter-spacing="1.2">PLANNED</text>
+    <!-- (4) Type label -->
+    <text x="208" y="205" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#6b7585" letter-spacing="1.3">TEST</text>
+    <!-- (5) Geometry summary -->
+    <text x="208" y="390" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="18" fill="#9ba6b5">ag=1mm  h=50mm  prop=6in</text>
+    <!-- (6) Link handle (Edit Mode) -->
+    <circle cx="740" cy="250" r="9" fill="#4a9eff" stroke="#0d1117" stroke-width="2.5" />
+    <!-- (7) + Add-child handle (Edit Mode) -->
+    <circle cx="725" cy="415" r="14" fill="#2c4a8a" stroke="#3a63b3" stroke-width="1.2" />
+    <text x="725" y="421" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="#ffffff">+</text>
+
+    <!-- Leader lines (orange) -->
+    <g stroke="#d97a4a" stroke-width="1.6" fill="none">
+      <line x1="186" y1="250" x2="90" y2="250" />     <!-- 1 -->
+      <line x1="350" y1="115" x2="350" y2="40" />     <!-- 2 -->
+      <line x1="653" y1="100" x2="653" y2="40" />     <!-- 3 -->
+      <line x1="208" y1="200" x2="90" y2="200" />     <!-- 4 -->
+      <line x1="300" y1="385" x2="90" y2="460" />     <!-- 5 -->
+      <line x1="749" y1="250" x2="850" y2="250" />    <!-- 6 -->
+      <line x1="739" y1="415" x2="850" y2="460" />    <!-- 7 -->
+    </g>
+
+    <!-- Numbered label dots -->
+    <g>
+      <circle cx="78"  cy="250" r="13" fill="#d97a4a" /><text x="78"  y="256" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#ffffff">1</text>
+      <circle cx="350" cy="28"  r="13" fill="#d97a4a" /><text x="350" y="34"  text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#ffffff">2</text>
+      <circle cx="653" cy="28"  r="13" fill="#d97a4a" /><text x="653" y="34"  text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#ffffff">3</text>
+      <circle cx="78"  cy="200" r="13" fill="#d97a4a" /><text x="78"  y="206" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#ffffff">4</text>
+      <circle cx="78"  cy="470" r="13" fill="#d97a4a" /><text x="78"  y="476" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#ffffff">5</text>
+      <circle cx="862" cy="250" r="13" fill="#d97a4a" /><text x="862" y="256" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#ffffff">6</text>
+      <circle cx="862" cy="470" r="13" fill="#d97a4a" /><text x="862" y="476" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#ffffff">7</text>
+    </g>
+  </svg>
+
+  <ol class="legend">
+    <li><span class="num">1</span><strong>Phase color stripe.</strong> A 4&nbsp;px wide bar on the left edge of the card, matching the phase color (blue Phase 1, green Phase 2, orange Phase 3, purple Final).</li>
+    <li><span class="num">2</span><strong>Title.</strong> Wraps fully inside the card (no truncation). Set in the side panel's <em>Title</em> field.</li>
+    <li><span class="num">3</span><strong>Status pill.</strong> Small rounded label top-right showing <code>PLANNED</code>, <code>IN-PROGRESS</code>, <code>DONE</code>, or <code>BLOCKED</code>.</li>
+    <li><span class="num">4</span><strong>Type label.</strong> One of <code>test</code>, <code>build</code>, <code>synthesis</code>, <code>decision</code>. Set in the side panel.</li>
+    <li><span class="num">5</span><strong>Geometry summary.</strong> Monospace one-liner of the non-null geometry fields, e.g. <code>ag=1mm&nbsp;&nbsp;h=50mm&nbsp;&nbsp;rods=t+b&nbsp;&nbsp;w=…g</code>.</li>
+    <li><span class="num">6</span><strong>Link handle</strong> — small dot on the right edge of the card. Only visible in Edit Mode. Drag from this dot onto another node's body to make this node a parent of that node.</li>
+    <li><span class="num">7</span><strong>+ Add-child handle</strong> — small <strong>+</strong> button at the bottom-right corner. Only visible in Edit Mode. Click to create a child node off this one.</li>
+  </ol>
+
+  <div class="callout">
+    <strong>Tip.</strong> Elements 6 and 7 (link handle and add-child button) are only
+    drawn on real cards when Edit Mode is on. The mockup above shows them so you can
+    recognise them later. See <em>Section 5</em> for a real edit-mode screenshot.
+  </div>
+</section>
+
+<!-- ====================== 4. Editing a node ====================== -->
+<section class="page">
+  <h2>4. Editing a node</h2>
+
+  <p>
+    Click any node on the canvas. A side panel slides in from the right with all the
+    editable fields. Every field saves immediately into the in-memory state; the
+    toolbar <em>Saved / Unsaved</em> pill turns yellow as soon as you change anything.
+  </p>
+
+  <figure>
+    <img src="screenshots/03-side-panel-empty.png" alt="Side panel for a node with no geometry filled." />
+    <figcaption>Side panel for <code>p1-no-duct-spacing</code> — a node with no geometry filled. Every geometry field is independently nullable.</figcaption>
+  </figure>
+
+  <h3>4.1 The side-panel fields</h3>
+
+  <table>
+    <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Title</strong></td><td>Short human label, used on the card and in search.</td></tr>
+      <tr><td><strong>Phase</strong></td><td>Drop-down. Determines the color stripe and the column header.</td></tr>
+      <tr><td><strong>Type</strong></td><td><code>test · build · synthesis · decision</code>.</td></tr>
+      <tr><td><strong>Status</strong></td><td><code>planned · in-progress · done · blocked</code>.</td></tr>
+      <tr><td><strong>Description</strong></td><td>1–3 sentences describing what the node represents.</td></tr>
+      <tr><td><strong>Air gap</strong> (mm)</td><td>Tip-to-shroud air gap for the duct.</td></tr>
+      <tr><td><strong>Duct height</strong> (mm)</td><td>Axial duct length.</td></tr>
+      <tr><td><strong>Rod count top / bottom</strong></td><td>Reinforcement rods on each side.</td></tr>
+      <tr><td><strong>Weight</strong> (g)</td><td>Mass of the test article.</td></tr>
+      <tr><td><strong>Propeller</strong> (in)</td><td>Propeller diameter in inches.</td></tr>
+      <tr><td><strong>Motor spacing</strong> (mm)</td><td>Inter-motor distance for multi-motor builds.</td></tr>
+      <tr><td><strong>Sound visualizer</strong></td><td>URL pasted in from the separate sound visualizer tool. Click <em>Open</em> to deep-link out.</td></tr>
+      <tr><td><strong>Notes</strong></td><td>Free-form free-text scratchpad.</td></tr>
+      <tr><td><strong>Parents</strong></td><td>Chips listing this node's parents. Use the combobox to add more; click the &times; to remove.</td></tr>
+      <tr><td><strong>Children</strong></td><td>Read-only list of dependent nodes.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Empty geometry inputs save as <code>null</code></strong>. That is expected
+    for fields that don't apply to a particular node — for example a synthesis node
+    has no air gap of its own. The geometry summary line on the card simply omits
+    the null fields.
+  </div>
+
+  <p>
+    The bottom of the side panel has <strong>Duplicate</strong> and
+    <strong>Delete</strong> buttons. Duplicate copies the node (new id, same parents,
+    same geometry) and selects it. Delete asks for confirmation and removes both the
+    node and any references to it from other nodes' <code>parents</code> lists.
+  </p>
+</section>
+
+<!-- ====================== 5. Adding & connecting nodes ====================== -->
+<section class="page">
+  <h2>5. Adding &amp; connecting nodes</h2>
+
+  <p>
+    Most edits happen in <strong>Edit Mode</strong>. Click <em>Edit Mode</em> in the
+    toolbar (or press the button at the top right) — the button highlights and the
+    cards grow handles.
+  </p>
+
+  <figure>
+    <img src="screenshots/04-edit-mode.png" alt="Edit mode on, node selected, handles visible." />
+    <figcaption>Edit Mode on. The button is highlighted (top right) and every card now sprouts a <strong>+</strong> handle at its bottom-right corner and a small link dot on its right edge.</figcaption>
+  </figure>
+
+  <h3>5.1 Four ways to add a node</h3>
+  <ul>
+    <li><strong>+ Add Node</strong> on the toolbar — creates a free-floating node.</li>
+    <li><strong>+ handle</strong> on a card's bottom-right (Edit Mode) — creates a child of that node.</li>
+    <li><strong>Right-click a node → Add child</strong> — same effect.</li>
+    <li><strong>Double-click an empty area of the canvas</strong> (Edit Mode) — creates a node at that position.</li>
+  </ul>
+
+  <h3>5.2 Connecting nodes</h3>
+  <ul>
+    <li><strong>Drag the link handle</strong> (right-edge dot, Edit Mode) onto another node's body — makes this node a parent of the target. The connection is rejected with a toast if it would create a cycle.</li>
+    <li><strong>Side-panel "+ Add parent" combobox</strong> — pick a node from the list to add it as a parent of the current node.</li>
+  </ul>
+
+  <h3>5.3 Reordering</h3>
+  <p>
+    In Edit Mode, drag a card vertically within its column to change its row order.
+    Across-column moves are determined automatically by the parent links — depth = 1
+    + max depth of parents, so dragging horizontally has no effect.
+  </p>
+
+  <h3>5.4 Keyboard shortcuts</h3>
+  <table>
+    <thead><tr><th>Keys</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><span class="kbd">Ctrl</span>/<span class="kbd">Cmd</span> + <span class="kbd">F</span></td><td>Focus search box</td></tr>
+      <tr><td><span class="kbd">Ctrl</span>/<span class="kbd">Cmd</span> + <span class="kbd">S</span></td><td>Save <code>data.json</code></td></tr>
+      <tr><td><span class="kbd">Esc</span></td><td>Close side panel / context menu / help overlay</td></tr>
+      <tr><td><span class="kbd">Delete</span></td><td>Delete the selected node (with confirmation)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ====================== 6. Saving ====================== -->
+<section class="page">
+  <h2>6. Saving</h2>
+
+  <p>
+    There are three save paths depending on how you opened the editor. The toolbar
+    pill <em>Saved</em> turns into <em>Unsaved</em> the moment any field changes;
+    saving turns it back to <em>Saved</em>.
+  </p>
+
+  <table>
+    <thead><tr><th>Mode</th><th>What <em>Save</em> does</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Over <code>http://</code></strong><br>(launcher or <code>python3 serve.py</code>)</td>
+        <td>Posts the JSON to the server, which writes <code>data.json</code> in place. No dialog, no permissions, no friction. <strong>This is the recommended path.</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Over <code>file://</code></strong> in Chromium (File System Access API)</td>
+        <td>The first save asks you to confirm a write back to <code>data.json</code>. From then on it writes silently to the same file.</td>
+      </tr>
+      <tr>
+        <td><strong>Over <code>file://</code></strong> in Firefox / Safari</td>
+        <td>The File System Access API is unavailable, so <em>Save</em> downloads <code>data.json</code> to your Downloads folder. You then have to copy it back into the research_tree directory by hand. Awkward — use the launcher instead.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Watch out.</strong> The browser will warn you with the
+    "Leave site?" dialog if you try to close the tab while changes are unsaved.
+    Saving immediately or pressing <span class="kbd">Ctrl</span>+<span class="kbd">S</span> is the cheapest insurance.
+  </div>
+</section>
+
+<!-- ====================== 7. Git workflow ====================== -->
+<section class="page">
+  <h2>7. Git workflow</h2>
+
+  <p>
+    The <strong>Git ▾</strong> button in the toolbar is enabled only when you opened
+    the editor over <code>http://</code> (i.e. via the launcher or
+    <code>serve.py</code>). On <code>file://</code> the button is disabled.
+  </p>
+
+  <div class="two-col">
+    <figure>
+      <img src="screenshots/06-git-panel.png" alt="Git status panel" />
+      <figcaption>Status panel: branch, ahead/behind, HEAD commit, dirty files.</figcaption>
+    </figure>
+    <figure>
+      <img src="screenshots/07-git-history.png" alt="Git history view" />
+      <figcaption>History view: last 20 commits that touched this tree's <code>data.json</code>.</figcaption>
+    </figure>
+  </div>
+
+  <h3>7.1 The four actions</h3>
+  <table>
+    <thead><tr><th>Button</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Pull</strong></td><td>Runs <code>git pull</code>; on success the editor re-fetches <code>data.json</code> so the canvas matches the new HEAD. If you have unsaved local changes, you'll be asked first — pulling discards them.</td></tr>
+      <tr><td><strong>Commit…</strong></td><td>Opens a one-line message box. Staging is automatic: only <code>data.json</code> is added. Hit <span class="kbd">Enter</span> to commit, <span class="kbd">Esc</span> to cancel.</td></tr>
+      <tr><td><strong>Push</strong></td><td>Runs <code>git push</code>. Errors (auth, conflict) surface as a toast.</td></tr>
+      <tr><td><strong>History</strong></td><td>Shows the last 20 commits that touched <em>this</em> <code>data.json</code>. <em>Back</em> returns to the status view.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>History is real <code>git log</code>.</strong> You can also run it from a
+    terminal: <code>git log -p PRACA/Shroud_Comparison/research_tree/data.json</code>.
+    The per-edit history is intentionally not squashed — that history is the
+    research log.
+  </div>
+
+  <h3>7.2 Suggested commit messages</h3>
+  <p>Use a <code>tree:</code> prefix and describe what changed in a few words.</p>
+  <pre><code>tree: fill ag1×h50 acoustic results
+tree: split p2-1d-rod-count into 2/4/6/8 sub-runs
+tree: mark p1-eval-no-duct as done</code></pre>
+</section>
+
+<!-- ====================== 8. Searching ====================== -->
+<section class="page">
+  <h2>8. Searching</h2>
+
+  <p>
+    Type any word into the search box (or press
+    <span class="kbd">Ctrl</span>+<span class="kbd">F</span>). Nodes whose title or
+    description contains the term remain bright; the rest are dimmed. The connections
+    stay visible so you can still see the surrounding structure. Press
+    <span class="kbd">Esc</span> while the search input is focused — or simply
+    delete the term — to clear the filter.
+  </p>
+
+  <figure>
+    <img src="screenshots/08-search.png" alt="Search filtering on 'duct'" />
+    <figcaption>Filtering the tree on the term <code>duct</code>. Matches stay bright, non-matches fade.</figcaption>
+  </figure>
+</section>
+
+<!-- ====================== 9. Worked example ====================== -->
+<section class="page">
+  <h2>9. Worked example</h2>
+
+  <p>
+    Suppose you have just finished bench-testing the single-duct rig with a 1&nbsp;mm
+    air gap and a 50&nbsp;mm duct height. Acoustic + thrust numbers live in the sound
+    visualizer; you want to capture the geometry &amp; status here and commit.
+  </p>
+
+  <ol>
+    <li>From a terminal: <code>research_tree -duct</code>. The browser opens.</li>
+    <li>On the canvas, click the card titled <strong>Single duct: 1mm gap, 50mm height</strong>. The side panel opens (see Section&nbsp;3 screenshot).</li>
+    <li>The <strong>Air gap</strong> and <strong>Duct height</strong> fields are already filled (<code>1</code> and <code>50</code>). Type the measured <strong>Weight</strong> in grams.</li>
+    <li>In the <strong>Sound visualizer</strong> field, paste the URL from the visualizer's session page.</li>
+    <li>Type a one-line summary in <strong>Notes</strong>: e.g. "first run, sweep T1 → T6 captured 2026-06-08".</li>
+    <li>Change <strong>Status</strong> from <code>planned</code> to <code>done</code>.</li>
+    <li>Click <strong>Save</strong> (or press <span class="kbd">Ctrl</span>+<span class="kbd">S</span>). The <em>Saved</em> pill turns green.</li>
+    <li>Click <strong>Git ▾</strong>, then <strong>Commit…</strong>, type:<br><code>tree: ag1×h50 results from 2026-06-08</code><br>and press <span class="kbd">Enter</span>.</li>
+    <li>Click <strong>Push</strong>. Done — the change is on the remote, with a clean diff against the previous state.</li>
+  </ol>
+</section>
+
+<!-- ====================== 10. Tree structure reference ====================== -->
+<section class="page">
+  <h2>10. Tree structure reference</h2>
+
+  <h3>10.1 Phases</h3>
+  <table>
+    <thead><tr><th>id</th><th>Title</th><th class="mono">color</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">phase1</td>       <td>Phase 1 — Foundation Tests</td><td class="mono">#4a9eff (blue)</td></tr>
+      <tr><td class="mono">phase1_synth</td> <td>Phase 1 — Synthesis</td>       <td class="mono">#4a9eff (blue)</td></tr>
+      <tr><td class="mono">phase2</td>       <td>Phase 2 — Drone Builds</td>    <td class="mono">#5cd97a (green)</td></tr>
+      <tr><td class="mono">phase2_synth</td> <td>Phase 2 — Synthesis</td>       <td class="mono">#5cd97a (green)</td></tr>
+      <tr><td class="mono">phase3</td>       <td>Phase 3 — Acoustic Materials</td><td class="mono">#ff9c4a (orange)</td></tr>
+      <tr><td class="mono">final</td>        <td>Final</td>                      <td class="mono">#d97aff (purple)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>10.2 Node types</h3>
+  <table>
+    <thead><tr><th class="mono">type</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">test</td><td>A physical experiment on a rig or drone. Geometry fields usually filled.</td></tr>
+      <tr><td class="mono">build</td><td>A fabrication step — assembling a 1D or 4D drone or sub-assembly.</td></tr>
+      <tr><td class="mono">synthesis</td><td>Aggregation/evaluation node. Combines several test outputs into a recommendation.</td></tr>
+      <tr><td class="mono">decision</td><td>Branch point: the team chooses a configuration that locks downstream nodes.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>10.3 Statuses</h3>
+  <table>
+    <thead><tr><th class="mono">status</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">planned</td>    <td>On the roadmap, not started.</td></tr>
+      <tr><td class="mono">in-progress</td><td>Active work.</td></tr>
+      <tr><td class="mono">done</td>       <td>Complete; results captured (link &amp; notes filled).</td></tr>
+      <tr><td class="mono">blocked</td>    <td>Cannot proceed until something upstream resolves.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="two-col">
+    <figure>
+      <img src="screenshots/09-decision-node.png" alt="Decision node selected" />
+      <figcaption>A decision node (<code>p1s-gap-rod-tradeoff</code>) — Phase 1 air-gap vs rod-count tradeoff.</figcaption>
+    </figure>
+    <figure>
+      <img src="screenshots/10-phase3-branch.png" alt="Phase 3 material screening node" />
+      <figcaption>Phase 3 root: the single-duct material screening rig that feeds the inside/outside/sandwich material variants.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ====================== 11. Adding a new research tree ====================== -->
+<section class="page">
+  <h2>11. Adding a new research tree</h2>
+
+  <p>
+    The <code>research_tree</code> bash launcher uses a heredoc table called
+    <code>TREES</code> to map a flag (like <code>-duct</code>) to a directory + port.
+    To register a second tree:
+  </p>
+
+  <ol>
+    <li>Create a new folder, e.g.<br><code>/home/adam/ŻYCIE/PRACA/SomeProject/research_tree/</code></li>
+    <li>Copy <code>index.html</code>, <code>serve.py</code> and a starter <code>data.json</code> into it. The schema must match (see Section 13).</li>
+    <li>Edit the <code>research_tree</code> launcher, find the <code>TREES</code> heredoc, and append one row:<br>
+      <code>-myproj  /home/adam/ŻYCIE/PRACA/SomeProject/research_tree  8125</code></li>
+    <li>Pick a port that doesn't clash with any other tree. Each tree gets its own port and its own server process.</li>
+    <li>Verify with <code>research_tree --list</code>. Then <code>research_tree -myproj</code> opens the new tree.</li>
+  </ol>
+
+  <p>
+    Each tree's <code>serve.py</code> is fully self-contained: it resolves the
+    enclosing git repository on startup and exposes <code>/api/git/*</code> rooted
+    there. So the same launcher pattern works for any tree whose
+    <code>data.json</code> sits in a git repo.
+  </p>
+</section>
+
+<!-- ====================== 12. Troubleshooting ====================== -->
+<section class="page">
+  <h2>12. Troubleshooting / FAQ</h2>
+
+  <table>
+    <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Git buttons are disabled / greyed out.</strong></td>
+        <td>You opened the editor via <code>file://</code>. The git endpoints only exist over <code>http://</code>. Close the tab and run <code>research_tree -duct</code> (or <code>python3 serve.py</code>) instead.</td>
+      </tr>
+      <tr>
+        <td><strong>Browser opens twice when I run the launcher.</strong></td>
+        <td>Used to happen on first start + reload; doesn't anymore — the launcher only opens a browser when it actually starts a new server. If you still see this, an older copy of the launcher is on your PATH.</td>
+      </tr>
+      <tr>
+        <td><strong><em>Save</em> downloaded the file instead of saving in place.</strong></td>
+        <td>You're on Firefox/Safari over <code>file://</code>. The File System Access API isn't available there. Use the launcher (server mode) or switch to Chromium.</td>
+      </tr>
+      <tr>
+        <td><strong>Pull failed with a merge conflict.</strong></td>
+        <td>The server refuses to auto-resolve. Drop to a terminal in the repo, run <code>git status</code>, resolve manually (most often by accepting one side of <code>data.json</code>), then commit.</td>
+      </tr>
+      <tr>
+        <td><strong>Long node titles are getting cut off.</strong></td>
+        <td>Not anymore — titles wrap fully inside the 220&times;130 card. If you see ellipsis, hard-refresh the page (<span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">R</span>) to pull the latest <code>index.html</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>The canvas is empty after launch.</strong></td>
+        <td>The fetch for <code>data.json</code> failed. Check the browser console; usually it means the file is malformed or missing. Restore from git: <code>git checkout -- data.json</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Adding a parent says "would create a cycle".</strong></td>
+        <td>The DAG invariant is enforced. Either the target node is already a descendant, or you've picked the wrong direction. Cancel and try the inverse link.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ====================== 13. Schema reference ====================== -->
+<section class="page">
+  <h2>13. Schema reference</h2>
+
+  <p>The on-disk <code>data.json</code> shape (must stay stable — both the editor and any future tooling depend on it):</p>
+
+  <pre><code>{
+  "title": "Duct Structure Test Research Tree",
+  "phases": [
+    {"id": "phase1",        "title": "Phase 1 — Foundation Tests",   "color": "#4a9eff"},
+    {"id": "phase1_synth",  "title": "Phase 1 — Synthesis",          "color": "#4a9eff"},
+    {"id": "phase2",        "title": "Phase 2 — Drone Builds",       "color": "#5cd97a"},
+    {"id": "phase2_synth",  "title": "Phase 2 — Synthesis",          "color": "#5cd97a"},
+    {"id": "phase3",        "title": "Phase 3 — Acoustic Materials", "color": "#ff9c4a"},
+    {"id": "final",         "title": "Final",                        "color": "#d97aff"}
+  ],
+  "nodes": [
+    {
+      "id": "kebab-slug",
+      "phaseId": "phase1",
+      "title": "Short title",
+      "description": "1–3 sentences.",
+      "type": "test | build | synthesis | decision",
+      "status": "planned | in-progress | done | blocked",
+      "parents": ["other-id"],
+      "geometry": {
+        "airGapMm": null, "ductHeightMm": null,
+        "rodCountTop": null, "rodCountBottom": null,
+        "weightG": null, "propellerInches": null, "motorSpacingMm": null
+      },
+      "soundVisualizerLink": "",
+      "notes": ""
+    }
+  ]
+}
+</code></pre>
+
+  <p><strong>Rules</strong></p>
+  <ul>
+    <li>kebab-case unique IDs.</li>
+    <li><code>parents</code> references IDs only (no orphans).</li>
+    <li>All geometry keys present (use <code>null</code> for N/A).</li>
+    <li>New nodes start <code>"planned"</code> with empty <code>soundVisualizerLink</code> and <code>notes</code>.</li>
+    <li>No cycles in <code>parents</code> — the editor refuses to create one.</li>
+    <li>Layout is implicit: column = 1 + max depth of parents. Structure is purely a function of the parent links.</li>
+  </ul>
+</section>
+
+<!-- ====================== 14. Appendix — keyboard ====================== -->
+<section class="page">
+  <h2>14. Appendix — keyboard shortcuts</h2>
+
+  <table>
+    <thead><tr><th>Keys</th><th>Action</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td><span class="kbd">Ctrl</span>/<span class="kbd">Cmd</span>+<span class="kbd">S</span></td><td>Save <code>data.json</code></td><td>Anywhere</td></tr>
+      <tr><td><span class="kbd">Ctrl</span>/<span class="kbd">Cmd</span>+<span class="kbd">F</span></td><td>Focus the search box</td><td>Anywhere</td></tr>
+      <tr><td><span class="kbd">Esc</span></td><td>Close side panel</td><td>When side panel is open</td></tr>
+      <tr><td><span class="kbd">Esc</span></td><td>Close context menu</td><td>When right-click menu is open</td></tr>
+      <tr><td><span class="kbd">Esc</span></td><td>Close Help overlay</td><td>When Help is open</td></tr>
+      <tr><td><span class="kbd">Esc</span></td><td>Cancel commit form</td><td>In the commit prompt</td></tr>
+      <tr><td><span class="kbd">Delete</span> / <span class="kbd">Backspace</span></td><td>Delete the selected node (with confirm)</td><td>Selection on canvas, not in an input</td></tr>
+      <tr><td><span class="kbd">Enter</span></td><td>Submit commit message</td><td>In the commit prompt</td></tr>
+      <tr><td>Click node</td><td>Select &amp; open side panel</td><td>Canvas</td></tr>
+      <tr><td>Drag empty</td><td>Pan the canvas</td><td>Canvas background</td></tr>
+      <tr><td>Wheel</td><td>Zoom (anchored on cursor)</td><td>Canvas</td></tr>
+      <tr><td>Right-click node</td><td>Context menu: Duplicate, Add child, Delete</td><td>Canvas</td></tr>
+      <tr><td>Double-click empty</td><td>Create node here</td><td>Canvas (Edit Mode only)</td></tr>
+      <tr><td>Drag node</td><td>Reorder within column</td><td>Canvas (Edit Mode only)</td></tr>
+      <tr><td>Drag right-edge dot</td><td>Link this node as parent of the target</td><td>Canvas (Edit Mode only)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>URL hash hooks (for deterministic screenshots &amp; deep links)</h3>
+  <table>
+    <thead><tr><th class="mono">hash</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">#node=&lt;id&gt;</td><td>Select that node and open the side panel.</td></tr>
+      <tr><td class="mono">#edit</td>           <td>Enable Edit Mode.</td></tr>
+      <tr><td class="mono">#git</td>            <td>Open the Git dropdown panel (server mode only).</td></tr>
+      <tr><td class="mono">#git=history</td>    <td>Open Git panel and switch to History view.</td></tr>
+      <tr><td class="mono">#help</td>           <td>Open the Help overlay.</td></tr>
+      <tr><td class="mono">#search=&lt;text&gt;</td><td>Pre-fill the search box and apply the filter.</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Hooks combine with <code>&amp;</code>, e.g.
+    <code>#node=p1-ag1-h50&amp;edit</code>. <code>hashchange</code> events
+    re-apply the state without a reload.
+  </p>
+</section>
+
+</body>
+</html>

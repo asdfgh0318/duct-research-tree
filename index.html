@@ -1,0 +1,2499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Research Tree Editor</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-grid: #161b22;
+    --panel: #161b22;
+    --panel-2: #1c2230;
+    --border: #2a313c;
+    --border-bright: #3a4252;
+    --text: #d6dde6;
+    --text-dim: #8b95a3;
+    --text-faint: #5b6471;
+    --accent: #4a9eff;
+    --good: #5cd97a;
+    --warn: #ff9c4a;
+    --bad: #ff6b6b;
+    --selected: #ffd166;
+    --shadow: 0 4px 14px rgba(0,0,0,0.45);
+    --node-w: 220px;
+    --node-h: 130px;
+    --col-gap: 90px;
+    --row-gap: 28px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+    overflow: hidden;
+  }
+  button, input, select, textarea {
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+  }
+  button {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+  }
+  button:hover { background: #242c3a; border-color: var(--border-bright); }
+  button:active { background: #1a212c; }
+  button.primary {
+    background: #1f4d8a;
+    border-color: #2c63a8;
+    color: #e8f1ff;
+  }
+  button.primary:hover { background: #2860a8; }
+  button.danger {
+    background: #4a1e1e;
+    border-color: #6a2a2a;
+    color: #ffd6d6;
+  }
+  button.danger:hover { background: #5e2828; }
+  input[type=text], input[type=number], input[type=url], select, textarea {
+    background: #0f141b;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 6px 8px;
+    width: 100%;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+
+  /* ===== Toolbar ===== */
+  #toolbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 48px;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    z-index: 50;
+  }
+  #toolbar .title {
+    font-weight: 600;
+    color: var(--text);
+    margin-right: 6px;
+    max-width: 280px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #toolbar .save-status {
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #11161e;
+    border: 1px solid var(--border);
+    min-width: 130px;
+    text-align: center;
+  }
+  #toolbar .save-status.dirty { color: var(--warn); border-color: #4a3520; }
+  #toolbar .save-status.saved { color: var(--good); border-color: #1f4a2a; }
+  #toolbar .spacer { flex: 1; }
+  #toolbar .search-wrap {
+    position: relative;
+    width: 200px;
+  }
+  #toolbar #searchInput {
+    padding-left: 26px;
+  }
+  #toolbar .search-icon {
+    position: absolute; left: 8px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-faint);
+    pointer-events: none;
+    font-size: 11px;
+  }
+  #toolbar .edit-toggle.active {
+    background: #2c4a8a;
+    border-color: #3a63b3;
+    color: #fff;
+  }
+
+  /* ===== Canvas / viewport ===== */
+  #viewport {
+    position: fixed;
+    top: 48px; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+    cursor: grab;
+    background:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0 / 40px 40px,
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0 / 40px 40px,
+      var(--bg);
+    background-position: 0 0;
+  }
+  #viewport.panning { cursor: grabbing; }
+  #viewport.edit-mode { box-shadow: inset 0 0 0 2px rgba(74,158,255,0.18); }
+  #canvas {
+    position: absolute;
+    top: 0; left: 0;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+  #connections {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    overflow: visible;
+  }
+  #connections path {
+    fill: none;
+    stroke: #3a4252;
+    stroke-width: 1.5;
+    transition: stroke .15s, stroke-width .15s;
+  }
+  #connections path.highlight {
+    stroke: var(--selected);
+    stroke-width: 2.2;
+    filter: drop-shadow(0 0 4px rgba(255,209,102,0.5));
+  }
+  #connections path.dim { opacity: 0.25; }
+
+  /* ===== Column headers ===== */
+  .col-header {
+    position: absolute;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    pointer-events: none;
+    width: var(--node-w);
+    font-weight: 600;
+  }
+  .col-header .swatch {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* ===== Node card ===== */
+  .node {
+    position: absolute;
+    width: var(--node-w);
+    height: var(--node-h);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--phase-color, #4a9eff);
+    border-radius: 7px;
+    padding: 9px 11px 9px 11px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column;
+    user-select: none;
+    transition: transform .1s, box-shadow .15s, border-color .15s, opacity .15s;
+  }
+  .node:hover {
+    border-color: var(--border-bright);
+    border-left-color: var(--phase-color, #4a9eff);
+    transform: translateY(-1px);
+  }
+  .node.selected {
+    border-color: var(--selected);
+    border-left-color: var(--phase-color, #4a9eff);
+    box-shadow: 0 0 0 1px var(--selected), 0 0 18px rgba(255,209,102,0.25), var(--shadow);
+  }
+  .node.dim { opacity: 0.25; }
+  .node.dragging { opacity: 0.7; z-index: 20; }
+  .node .row1 {
+    display: flex; align-items: flex-start; gap: 6px;
+    margin-bottom: 4px;
+  }
+  .node .title {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.25;
+    color: var(--text);
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    flex: 1;
+  }
+  .node .status-pill {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    background: #232a36;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .node .status-pill.planned     { background: #232a36; color: #9ba6b5; border-color: #2f3744; }
+  .node .status-pill.in-progress { background: #2a3f5e; color: #8fc3ff; border-color: #3a5a8a; }
+  .node .status-pill.done        { background: #1f3d2a; color: #7fdc92; border-color: #2f5a3f; }
+  .node .status-pill.blocked     { background: #4a1f1f; color: #ff9b9b; border-color: #6a2a2a; }
+  .node .type-label {
+    font-size: 10px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 3px;
+  }
+  .node .geom {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: auto;
+  }
+  /* edit-mode handles */
+  .node .handle-add {
+    position: absolute;
+    bottom: -10px; right: -10px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #2c4a8a;
+    border: 1px solid #3a63b3;
+    color: #fff;
+    font-size: 16px;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+    display: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
+  .node .handle-link {
+    position: absolute;
+    top: 50%;
+    right: -7px;
+    transform: translateY(-50%);
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--phase-color, #4a9eff);
+    border: 2px solid var(--bg);
+    cursor: grab;
+    display: none;
+  }
+  .node .drop-zone {
+    position: absolute;
+    top: 0; left: -10px;
+    width: 14px; height: 100%;
+    display: none;
+  }
+  body.edit-mode .node .handle-add,
+  body.edit-mode .node .handle-link,
+  body.edit-mode .node .drop-zone {
+    display: block;
+  }
+  body.edit-mode .node {
+    cursor: move;
+  }
+  .node.drop-target {
+    box-shadow: 0 0 0 2px var(--good), 0 0 16px rgba(92,217,122,0.4);
+  }
+
+  /* ===== Side panel ===== */
+  #side {
+    position: fixed;
+    top: 48px; right: 0; bottom: 0;
+    width: 420px;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform .22s ease;
+    overflow-y: auto;
+    z-index: 40;
+    box-shadow: -6px 0 20px rgba(0,0,0,0.35);
+  }
+  #side.open { transform: translateX(0); }
+  #side .head {
+    position: sticky; top: 0;
+    background: var(--panel);
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    gap: 8px;
+    z-index: 2;
+  }
+  #side .head .phase-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--phase-color, #4a9eff);
+    flex-shrink: 0;
+  }
+  #side .head .id-tag {
+    color: var(--text-faint);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #side .head .close-btn {
+    padding: 4px 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+  }
+  #side .body { padding: 14px; }
+  #side .field {
+    margin-bottom: 14px;
+  }
+  #side .field label {
+    display: block;
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+  #side .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  #side .row3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  #side .geom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  #side .geom-grid .unit {
+    position: relative;
+  }
+  #side .geom-grid .unit::after {
+    content: attr(data-unit);
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-faint);
+    font-size: 11px;
+    pointer-events: none;
+  }
+  #side .geom-grid input { padding-right: 30px; }
+  #side .chips {
+    display: flex; flex-wrap: wrap;
+    gap: 6px;
+    min-height: 24px;
+  }
+  #side .chip {
+    background: #232a36;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  #side .chip:hover { background: #2c3441; }
+  #side .chip .x {
+    color: var(--text-faint);
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1;
+  }
+  #side .chip .x:hover { color: var(--bad); }
+  #side .chip.readonly { cursor: pointer; opacity: 0.95; }
+  #side .add-parent {
+    margin-top: 6px;
+    display: flex; gap: 6px;
+  }
+  #side .add-parent select { flex: 1; }
+  #side .section-title {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 18px 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  #side .actions-row {
+    display: flex; gap: 8px;
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  #side .url-row {
+    display: flex; gap: 6px;
+  }
+  #side .url-row input { flex: 1; }
+
+  /* ===== Help overlay ===== */
+  #helpOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  #helpOverlay.open { display: flex; }
+  #helpOverlay .box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: min(560px, 92vw);
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 22px 26px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  }
+  #helpOverlay h2 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  #helpOverlay h3 {
+    margin: 16px 0 6px 0;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  #helpOverlay dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 14px;
+  }
+  #helpOverlay dt {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    color: var(--accent);
+    font-size: 12px;
+  }
+  #helpOverlay dd {
+    margin: 0;
+    color: var(--text);
+    font-size: 12px;
+  }
+  #helpOverlay .git-note {
+    margin-top: 18px;
+    padding: 10px 12px;
+    background: #11161e;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  #helpOverlay .git-note code {
+    color: var(--good);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  #helpOverlay .close-help {
+    float: right;
+  }
+
+  /* ===== Empty state ===== */
+  #emptyState {
+    position: fixed;
+    inset: 48px 0 0 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    color: var(--text-dim);
+    z-index: 30;
+  }
+  #emptyState.show { display: flex; }
+  #emptyState .msg {
+    font-size: 14px;
+    max-width: 480px;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ===== Zoom indicator ===== */
+  #zoomIndicator {
+    position: fixed;
+    bottom: 14px; left: 14px;
+    background: rgba(22,27,34,0.85);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    z-index: 30;
+    pointer-events: none;
+  }
+
+  /* ===== Toast ===== */
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 16px;
+    color: var(--text);
+    box-shadow: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    z-index: 200;
+    font-size: 13px;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  #toast.error { border-color: #6a2a2a; }
+  #toast.success { border-color: #2f5a3f; }
+
+  /* ===== Git dropdown + git toasts ===== */
+  .git-wrap { position: relative; display: inline-block; }
+  #gitPanel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 320px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+    z-index: 120;
+    color: var(--text);
+  }
+  #gitPanel.open { display: block; }
+  #gitPanel .git-row { display: flex; flex-direction: column; gap: 6px; }
+  #gitPanel .git-status-box {
+    background: #0f141b;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    max-height: 160px;
+    overflow: auto;
+    word-break: break-all;
+  }
+  #gitPanel .git-status-box .branch { color: var(--text); font-weight: 600; }
+  #gitPanel .git-status-box .ahead  { color: var(--good); }
+  #gitPanel .git-status-box .behind { color: var(--warn); }
+  #gitPanel .git-status-box .head   { color: var(--text); }
+  #gitPanel .git-status-box .dirty-list { margin-top: 4px; }
+  #gitPanel .git-status-box .dirty-list .f { color: var(--warn); }
+  #gitPanel .git-status-box .empty-line { color: var(--text-faint); font-style: italic; }
+  #gitPanel .git-actions { display: flex; flex-direction: column; gap: 6px; }
+  #gitPanel .git-actions button { width: 100%; text-align: left; }
+  #gitPanel .commit-form { display: flex; flex-direction: column; gap: 6px; }
+  #gitPanel .commit-form .row { display: flex; gap: 6px; }
+  #gitPanel .commit-form .row button { flex: 1; }
+  #gitPanel .history-list {
+    max-height: 320px; overflow: auto;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  #gitPanel .history-entry {
+    background: #0f141b;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 6px 8px;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  #gitPanel .history-entry .meta {
+    color: var(--text-faint); font-size: 11px; margin-bottom: 2px;
+  }
+  #gitPanel .history-entry .hash { color: var(--accent); font-family: ui-monospace, Menlo, monospace; }
+  #gitPanel .history-entry .subject { color: var(--text); }
+
+  #gitToasts {
+    position: fixed;
+    top: 60px; right: 14px;
+    display: flex; flex-direction: column; gap: 6px;
+    z-index: 250;
+    pointer-events: none;
+  }
+  #gitToasts .gt {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    box-shadow: var(--shadow);
+    font-size: 12px;
+    opacity: 0;
+    transform: translateX(8px);
+    transition: opacity .18s, transform .18s;
+    pointer-events: auto;
+    max-width: 340px;
+    word-break: break-word;
+  }
+  #gitToasts .gt.show { opacity: 1; transform: translateX(0); }
+  #gitToasts .gt.success { border-color: #2f5a3f; }
+  #gitToasts .gt.error   { border-color: #6a2a2a; }
+  #gitToasts .gt.neutral { border-color: var(--border-bright); }
+  #toolbar #btnGit[disabled] { opacity: 0.55; cursor: not-allowed; }
+
+  /* ===== Context menu ===== */
+  #ctxMenu {
+    position: fixed;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    padding: 4px;
+    z-index: 150;
+    display: none;
+    min-width: 150px;
+  }
+  #ctxMenu.open { display: block; }
+  #ctxMenu .item {
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  #ctxMenu .item:hover { background: #2a3140; }
+  #ctxMenu .item.danger { color: #ff9b9b; }
+  #ctxMenu .sep {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  /* save check anim */
+  @keyframes checkPulse {
+    0%   { transform: scale(0.6); opacity: 0; }
+    50%  { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  .save-status .check {
+    display: inline-block;
+    animation: checkPulse 0.4s ease;
+    color: var(--good);
+    margin-right: 4px;
+  }
+
+  /* link drag preview */
+  #linkDragLine {
+    position: fixed;
+    pointer-events: none;
+    z-index: 80;
+    overflow: visible;
+  }
+  #linkDragLine path {
+    fill: none;
+    stroke: var(--good);
+    stroke-width: 2;
+    stroke-dasharray: 4 4;
+  }
+
+  /* scrollbar */
+  #side::-webkit-scrollbar, #helpOverlay .box::-webkit-scrollbar { width: 10px; }
+  #side::-webkit-scrollbar-thumb,
+  #helpOverlay .box::-webkit-scrollbar-thumb {
+    background: #2a313c;
+    border-radius: 5px;
+  }
+  #side::-webkit-scrollbar-track,
+  #helpOverlay .box::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <div class="title" id="docTitle">Research Tree</div>
+  <div class="save-status saved" id="saveStatus">Saved</div>
+  <div class="spacer"></div>
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input id="searchInput" type="text" placeholder="Search nodes…" />
+  </div>
+  <button id="btnAddNode" title="Add a new node">+ Add Node</button>
+  <button id="btnEditMode" class="edit-toggle" title="Toggle edit mode">Edit Mode</button>
+  <button id="btnOpen" title="Open data.json">Open</button>
+  <div class="git-wrap">
+    <button id="btnGit" title="Git actions">Git ▾</button>
+    <div id="gitPanel" role="dialog" aria-label="Git actions"></div>
+  </div>
+  <button id="btnSave" class="primary" title="Save (Ctrl/Cmd+S)">Save</button>
+  <button id="btnHelp" title="Help">?</button>
+</div>
+<div id="gitToasts"></div>
+
+<div id="viewport">
+  <div id="canvas">
+    <svg id="connections" xmlns="http://www.w3.org/2000/svg"></svg>
+    <!-- column headers + nodes injected here -->
+  </div>
+</div>
+
+<div id="emptyState">
+  <div class="msg">
+    No data loaded.<br/>
+    Click the button below to open <code>data.json</code> from this folder.
+  </div>
+  <button id="btnOpenEmpty" class="primary">Open data.json</button>
+  <button id="btnNewEmpty">Start a new tree</button>
+</div>
+
+<div id="side">
+  <div class="head">
+    <span class="phase-dot" id="sidePhaseDot"></span>
+    <span class="id-tag" id="sideIdTag"></span>
+    <button class="close-btn" id="sideClose" title="Close (Esc)">✕</button>
+  </div>
+  <div class="body" id="sideBody">
+    <div class="field">
+      <label>Title</label>
+      <input id="fTitle" type="text" />
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>Phase</label>
+        <select id="fPhase"></select>
+      </div>
+      <div class="field">
+        <label>Type</label>
+        <select id="fType">
+          <option value="test">test</option>
+          <option value="build">build</option>
+          <option value="synthesis">synthesis</option>
+          <option value="decision">decision</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="planned">planned</option>
+          <option value="in-progress">in-progress</option>
+          <option value="done">done</option>
+          <option value="blocked">blocked</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <textarea id="fDescription" rows="4"></textarea>
+    </div>
+
+    <div class="section-title">Geometry</div>
+    <div class="geom-grid">
+      <div class="field"><label>Air Gap</label><div class="unit" data-unit="mm"><input id="gAirGap" type="number" step="0.1" /></div></div>
+      <div class="field"><label>Duct Height</label><div class="unit" data-unit="mm"><input id="gDuctHeight" type="number" step="0.1" /></div></div>
+      <div class="field"><label>Rod Count Top</label><div class="unit" data-unit=""><input id="gRodTop" type="number" step="1" /></div></div>
+      <div class="field"><label>Rod Count Bottom</label><div class="unit" data-unit=""><input id="gRodBottom" type="number" step="1" /></div></div>
+      <div class="field"><label>Weight</label><div class="unit" data-unit="g"><input id="gWeight" type="number" step="0.1" /></div></div>
+      <div class="field"><label>Propeller</label><div class="unit" data-unit="in"><input id="gProp" type="number" step="0.1" /></div></div>
+      <div class="field" style="grid-column: span 2;"><label>Motor Spacing</label><div class="unit" data-unit="mm"><input id="gMotorSp" type="number" step="0.1" /></div></div>
+    </div>
+
+    <div class="section-title">Sound Visualizer</div>
+    <div class="field">
+      <div class="url-row">
+        <input id="fSoundLink" type="url" placeholder="https://…" />
+        <button id="fSoundOpen" title="Open in new tab">Open ↗</button>
+      </div>
+    </div>
+
+    <div class="section-title">Notes</div>
+    <div class="field">
+      <textarea id="fNotes" rows="5"></textarea>
+    </div>
+
+    <div class="section-title">Parents</div>
+    <div class="field">
+      <div class="chips" id="parentChips"></div>
+      <div class="add-parent">
+        <select id="addParentSelect"></select>
+        <button id="addParentBtn">+ Add parent</button>
+      </div>
+    </div>
+
+    <div class="section-title">Children</div>
+    <div class="field">
+      <div class="chips" id="childChips"></div>
+    </div>
+
+    <div class="actions-row">
+      <button id="btnDuplicate">Duplicate</button>
+      <div style="flex:1"></div>
+      <button id="btnDelete" class="danger">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="zoomIndicator">100%</div>
+<div id="toast"></div>
+<div id="ctxMenu"></div>
+<svg id="linkDragLine"><path d=""></path></svg>
+
+<div id="helpOverlay">
+  <div class="box">
+    <button class="close-btn close-help" id="closeHelp">Close</button>
+    <h2>Research Tree Editor — Help</h2>
+
+    <h3>Keyboard</h3>
+    <dl>
+      <dt>Ctrl/Cmd + S</dt><dd>Save data.json</dd>
+      <dt>Ctrl/Cmd + F</dt><dd>Focus search</dd>
+      <dt>Esc</dt><dd>Close side panel / context menu / help</dd>
+      <dt>Delete</dt><dd>Delete selected node (with confirmation)</dd>
+    </dl>
+
+    <h3>Mouse</h3>
+    <dl>
+      <dt>Click node</dt><dd>Select &amp; open side panel</dd>
+      <dt>Drag empty</dt><dd>Pan the canvas</dd>
+      <dt>Wheel</dt><dd>Zoom (anchored on cursor)</dd>
+      <dt>Right-click node</dt><dd>Context menu: Duplicate, Add child, Delete</dd>
+      <dt>Double-click empty</dt><dd>Create node here (Edit Mode only)</dd>
+      <dt>Drag node</dt><dd>Reorder within column (Edit Mode)</dd>
+      <dt>Drag right-edge dot</dt><dd>Link this node as parent of target (Edit Mode)</dd>
+    </dl>
+
+    <h3>Saving</h3>
+    <dl>
+      <dt>Save</dt><dd>Writes back to the same file you opened. Falls back to download in browsers that don't support File System Access.</dd>
+      <dt>Open</dt><dd>Replace state with another data.json file.</dd>
+    </dl>
+
+    <div class="git-note">
+      History lives in git — commit <code>data.json</code> after edits, then <code>git log -p data.json</code> to see changes.
+    </div>
+    <p style="margin-top:14px;color:#9ba6b5;font-size:12px">Full illustrated manual: <a href="manual/manual.pdf" target="_blank" style="color:#4a9eff">manual/manual.pdf</a></p>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ====================== Defaults & state ====================== */
+const DEFAULT_PHASES = [
+  { id: "phase1",       title: "Phase 1 — Foundation Tests",   color: "#4a9eff" },
+  { id: "phase1_synth", title: "Phase 1 — Synthesis",          color: "#4a9eff" },
+  { id: "phase2",       title: "Phase 2 — Drone Builds",       color: "#5cd97a" },
+  { id: "phase2_synth", title: "Phase 2 — Synthesis",          color: "#5cd97a" },
+  { id: "phase3",       title: "Phase 3 — Acoustic Materials", color: "#ff9c4a" },
+  { id: "final",        title: "Final",                        color: "#d97aff" },
+];
+
+const GEOM_KEYS = [
+  "airGapMm","ductHeightMm","rodCountTop","rodCountBottom",
+  "weightG","propellerInches","motorSpacingMm"
+];
+
+const COL_GAP = 90;
+const ROW_GAP = 28;
+const NODE_W = 220;
+const NODE_H = 130;
+const COL_W = NODE_W + COL_GAP;
+const ROW_H = NODE_H + ROW_GAP;
+const HEADER_OFFSET = 40;
+const PAD = 60;
+
+let state = emptyState();
+let dirty = false;
+let fileHandle = null;
+let selectedId = null;
+let editMode = false;
+let searchTerm = "";
+
+// view transform
+let view = { x: 0, y: 0, z: 1 };
+
+// layout cache
+let layoutCache = null;
+
+/* ====================== DOM refs ====================== */
+const $ = (id) => document.getElementById(id);
+const viewport = $("viewport");
+const canvas = $("canvas");
+const connSvg = $("connections");
+const side = $("side");
+const emptyState_ = $("emptyState");
+const toast = $("toast");
+const ctxMenu = $("ctxMenu");
+const linkDragSvg = $("linkDragLine");
+const docTitleEl = $("docTitle");
+
+/* ====================== Utilities ====================== */
+function emptyState() {
+  return {
+    title: "Duct Structure Test Research Tree",
+    phases: JSON.parse(JSON.stringify(DEFAULT_PHASES)),
+    nodes: []
+  };
+}
+
+function newGeometry() {
+  const g = {};
+  for (const k of GEOM_KEYS) g[k] = null;
+  return g;
+}
+
+function genId() {
+  const used = new Set(state.nodes.map(n => n.id));
+  for (let tries = 0; tries < 50; tries++) {
+    const id = "node-" + Math.random().toString(16).slice(2, 8);
+    if (!used.has(id)) return id;
+  }
+  // pathological fallback
+  return "node-" + Date.now().toString(16);
+}
+
+function showToast(msg, type) {
+  toast.textContent = msg;
+  toast.className = "";
+  if (type) toast.classList.add(type);
+  toast.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+function getNode(id) { return state.nodes.find(n => n.id === id); }
+
+function getPhase(id) {
+  return state.phases.find(p => p.id === id) || state.phases[0] || DEFAULT_PHASES[0];
+}
+
+function markDirty() {
+  dirty = true;
+  updateSaveStatus();
+}
+
+function updateSaveStatus() {
+  const el = $("saveStatus");
+  if (dirty) {
+    el.className = "save-status dirty";
+    el.textContent = "Unsaved changes";
+  } else {
+    el.className = "save-status saved";
+    el.textContent = "Saved";
+  }
+}
+
+function flashSaved() {
+  const el = $("saveStatus");
+  el.className = "save-status saved";
+  el.innerHTML = '<span class="check">✓</span>Saved';
+  setTimeout(() => { if (!dirty) el.textContent = "Saved"; }, 1200);
+}
+
+/* ====================== Loading / sanitizing ====================== */
+function sanitize(raw) {
+  const s = emptyState();
+  if (!raw || typeof raw !== "object") return s;
+  if (typeof raw.title === "string") s.title = raw.title;
+  if (Array.isArray(raw.phases) && raw.phases.length) {
+    s.phases = raw.phases.map(p => ({
+      id: String(p.id || "phase"),
+      title: String(p.title || p.id || "Phase"),
+      color: typeof p.color === "string" ? p.color : "#4a9eff"
+    }));
+  }
+  const validPhaseIds = new Set(s.phases.map(p => p.id));
+  const validIds = new Set();
+  if (Array.isArray(raw.nodes)) {
+    for (const n of raw.nodes) {
+      if (!n || typeof n !== "object" || !n.id) continue;
+      validIds.add(String(n.id));
+    }
+  }
+  if (Array.isArray(raw.nodes)) {
+    for (const n of raw.nodes) {
+      if (!n || typeof n !== "object" || !n.id) continue;
+      const phaseId = validPhaseIds.has(n.phaseId) ? n.phaseId : s.phases[0].id;
+      const geomIn = (n.geometry && typeof n.geometry === "object") ? n.geometry : {};
+      const geom = newGeometry();
+      for (const k of GEOM_KEYS) {
+        if (geomIn[k] !== undefined && geomIn[k] !== null && geomIn[k] !== "") {
+          const v = Number(geomIn[k]);
+          geom[k] = Number.isFinite(v) ? v : null;
+        }
+      }
+      const parents = Array.isArray(n.parents)
+        ? n.parents.filter(p => {
+            if (p === n.id) return false;
+            if (!validIds.has(p)) {
+              console.warn("Dropping invalid parent ref", p, "from", n.id);
+              return false;
+            }
+            return true;
+          })
+        : [];
+      s.nodes.push({
+        id: String(n.id),
+        phaseId,
+        title: String(n.title || "Untitled"),
+        description: typeof n.description === "string" ? n.description : "",
+        type: ["test","build","synthesis","decision"].includes(n.type) ? n.type : "test",
+        status: ["planned","in-progress","done","blocked"].includes(n.status) ? n.status : "planned",
+        parents,
+        geometry: geom,
+        soundVisualizerLink: typeof n.soundVisualizerLink === "string" ? n.soundVisualizerLink : "",
+        notes: typeof n.notes === "string" ? n.notes : ""
+      });
+    }
+  }
+  return s;
+}
+
+function setState(newState, opts) {
+  state = newState;
+  selectedId = null;
+  closeSide();
+  layoutCache = null;
+  if (state.title) docTitleEl.textContent = state.title;
+  emptyState_.classList.remove("show");
+  rebuildPhaseDropdown();
+  render();
+  if (opts && opts.markDirty) markDirty();
+  else { dirty = false; updateSaveStatus(); }
+}
+
+async function tryAutoLoad() {
+  try {
+    const res = await fetch("./data.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    setState(sanitize(data));
+    return true;
+  } catch (e) {
+    console.warn("Auto-load failed:", e.message);
+    emptyState_.classList.add("show");
+    return false;
+  }
+}
+
+/* ====================== Layout ====================== */
+function computeDepths() {
+  const depths = new Map();
+  const visiting = new Set();
+  function d(id) {
+    if (depths.has(id)) return depths.get(id);
+    if (visiting.has(id)) return 0; // cycle protection
+    visiting.add(id);
+    const node = getNode(id);
+    let val = 0;
+    if (node && node.parents && node.parents.length) {
+      let m = -1;
+      for (const p of node.parents) {
+        if (!getNode(p)) continue;
+        m = Math.max(m, d(p));
+      }
+      val = (m >= 0) ? m + 1 : 0;
+    }
+    visiting.delete(id);
+    depths.set(id, val);
+    return val;
+  }
+  for (const n of state.nodes) d(n.id);
+  return depths;
+}
+
+function layout() {
+  const depths = computeDepths();
+  const columns = new Map(); // depth -> array of nodeIds
+
+  // Sort nodes deterministically within column: by phase order, then by title
+  const phaseOrder = new Map(state.phases.map((p, i) => [p.id, i]));
+
+  for (const n of state.nodes) {
+    const d = depths.get(n.id) || 0;
+    if (!columns.has(d)) columns.set(d, []);
+    columns.get(d).push(n);
+  }
+
+  // Sort and assign positions
+  const positions = new Map(); // id -> {x, y, depth, row}
+  const maxDepth = columns.size ? Math.max(...columns.keys()) : 0;
+  let maxRows = 0;
+
+  const sortedDepths = Array.from(columns.keys()).sort((a, b) => a - b);
+  for (const d of sortedDepths) {
+    const arr = columns.get(d);
+    arr.sort((a, b) => {
+      const pa = phaseOrder.has(a.phaseId) ? phaseOrder.get(a.phaseId) : 99;
+      const pb = phaseOrder.has(b.phaseId) ? phaseOrder.get(b.phaseId) : 99;
+      if (pa !== pb) return pa - pb;
+      return a.title.localeCompare(b.title);
+    });
+    arr.forEach((n, i) => {
+      const x = PAD + d * COL_W;
+      const y = PAD + HEADER_OFFSET + i * ROW_H;
+      positions.set(n.id, { x, y, depth: d, row: i });
+    });
+    if (arr.length > maxRows) maxRows = arr.length;
+  }
+
+  const width  = PAD * 2 + (maxDepth + 1) * COL_W;
+  const height = PAD * 2 + HEADER_OFFSET + maxRows * ROW_H;
+
+  return { columns, positions, width, height, maxDepth };
+}
+
+/* ====================== Render ====================== */
+function render() {
+  layoutCache = layout();
+
+  // Size canvas
+  canvas.style.width  = layoutCache.width  + "px";
+  canvas.style.height = layoutCache.height + "px";
+  connSvg.setAttribute("width",  layoutCache.width);
+  connSvg.setAttribute("height", layoutCache.height);
+
+  // Remove existing nodes & headers (keep SVG)
+  Array.from(canvas.querySelectorAll(".node, .col-header")).forEach(el => el.remove());
+
+  // Column headers — pick the dominant phase for that column
+  const sortedDepths = Array.from(layoutCache.columns.keys()).sort((a, b) => a - b);
+  for (const d of sortedDepths) {
+    const arr = layoutCache.columns.get(d);
+    if (!arr.length) continue;
+    // Most common phase in column
+    const counts = {};
+    for (const n of arr) counts[n.phaseId] = (counts[n.phaseId] || 0) + 1;
+    let topPhase = arr[0].phaseId, topCount = 0;
+    for (const k of Object.keys(counts)) if (counts[k] > topCount) { topPhase = k; topCount = counts[k]; }
+    const ph = getPhase(topPhase);
+    const h = document.createElement("div");
+    h.className = "col-header";
+    h.style.left = (PAD + d * COL_W) + "px";
+    h.style.top  = (PAD + 8) + "px";
+    h.innerHTML = `<span class="swatch" style="background:${ph.color}"></span>${escapeHtml(ph.title)}`;
+    canvas.appendChild(h);
+  }
+
+  // Nodes
+  for (const n of state.nodes) {
+    const pos = layoutCache.positions.get(n.id);
+    if (!pos) continue;
+    canvas.appendChild(buildNodeEl(n, pos));
+  }
+
+  drawConnections();
+  applyTransform();
+  applySearchFilter();
+  if (selectedId) markSelectedDOM();
+}
+
+function buildNodeEl(node, pos) {
+  const phase = getPhase(node.phaseId);
+  const el = document.createElement("div");
+  el.className = "node";
+  el.dataset.id = node.id;
+  el.style.left = pos.x + "px";
+  el.style.top  = pos.y + "px";
+  el.style.setProperty("--phase-color", phase.color);
+
+  const geomLine = formatGeom(node.geometry);
+  el.innerHTML = `
+    <div class="row1">
+      <div class="title" title="${escapeAttr(node.title)}">${escapeHtml(node.title)}</div>
+      <div class="status-pill ${node.status}">${escapeHtml(node.status)}</div>
+    </div>
+    <div class="type-label">${escapeHtml(node.type)}</div>
+    <div class="geom" title="${escapeAttr(geomLine || '')}">${escapeHtml(geomLine || '—')}</div>
+    <div class="drop-zone" data-role="drop-zone"></div>
+    <div class="handle-link" data-role="link-handle" title="Drag to another node to add a parent link"></div>
+    <div class="handle-add" data-role="add-child" title="Add child node">+</div>
+  `;
+  return el;
+}
+
+function formatGeom(g) {
+  if (!g) return "";
+  const parts = [];
+  if (g.airGapMm     != null) parts.push("ag=" + g.airGapMm + "mm");
+  if (g.ductHeightMm != null) parts.push("h="  + g.ductHeightMm + "mm");
+  if (g.rodCountTop != null || g.rodCountBottom != null) {
+    const t = g.rodCountTop ?? "?";
+    const b = g.rodCountBottom ?? "?";
+    parts.push("rods=" + t + "+" + b);
+  }
+  if (g.weightG         != null) parts.push("w="     + g.weightG + "g");
+  if (g.propellerInches != null) parts.push("prop=" + g.propellerInches + "in");
+  if (g.motorSpacingMm  != null) parts.push("ms="   + g.motorSpacingMm + "mm");
+  return parts.join("  ");
+}
+
+function drawConnections() {
+  while (connSvg.firstChild) connSvg.removeChild(connSvg.firstChild);
+  const selectedNeighbors = selectedId
+    ? new Set([selectedId, ...(getNode(selectedId)?.parents || []),
+       ...state.nodes.filter(n => n.parents.includes(selectedId)).map(n => n.id)])
+    : null;
+
+  for (const n of state.nodes) {
+    const childPos = layoutCache.positions.get(n.id);
+    if (!childPos) continue;
+    for (const pid of n.parents) {
+      const parentPos = layoutCache.positions.get(pid);
+      if (!parentPos) continue;
+      const x1 = parentPos.x + NODE_W;
+      const y1 = parentPos.y + NODE_H / 2;
+      const x2 = childPos.x;
+      const y2 = childPos.y + NODE_H / 2;
+      const dx = Math.max(40, (x2 - x1) * 0.5);
+      const d = `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`;
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      path.dataset.parent = pid;
+      path.dataset.child = n.id;
+      if (selectedNeighbors) {
+        if (selectedNeighbors.has(pid) && selectedNeighbors.has(n.id)) {
+          path.classList.add("highlight");
+        } else {
+          path.classList.add("dim");
+        }
+      }
+      connSvg.appendChild(path);
+    }
+  }
+}
+
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function escapeAttr(s) {
+  return escapeHtml(s).replace(/"/g, "&quot;");
+}
+
+/* ====================== View transform ====================== */
+function applyTransform() {
+  canvas.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.z})`;
+  $("zoomIndicator").textContent = Math.round(view.z * 100) + "%";
+}
+
+function fitToContent() {
+  if (!layoutCache) return;
+  const vw = viewport.clientWidth;
+  const vh = viewport.clientHeight;
+  const zx = vw / (layoutCache.width  + 80);
+  const zy = vh / (layoutCache.height + 80);
+  view.z = Math.min(1, Math.max(0.3, Math.min(zx, zy)));
+  view.x = (vw - layoutCache.width  * view.z) / 2;
+  view.y = (vh - layoutCache.height * view.z) / 2;
+  applyTransform();
+}
+
+/* Pan & zoom */
+(function setupPanZoom() {
+  let panning = false;
+  let startX = 0, startY = 0, startVx = 0, startVy = 0;
+
+  viewport.addEventListener("mousedown", (e) => {
+    // Only pan when clicking empty area (viewport itself or canvas / connections svg, NOT a node)
+    if (e.button !== 0) return;
+    const t = e.target;
+    if (t.closest(".node")) return;
+    if (t.closest("#side")) return;
+    panning = true;
+    startX = e.clientX; startY = e.clientY;
+    startVx = view.x; startVy = view.y;
+    viewport.classList.add("panning");
+    // Deselect on empty click
+    selectNode(null);
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!panning) return;
+    view.x = startVx + (e.clientX - startX);
+    view.y = startVy + (e.clientY - startY);
+    applyTransform();
+  });
+  window.addEventListener("mouseup", () => {
+    if (panning) {
+      panning = false;
+      viewport.classList.remove("panning");
+    }
+  });
+
+  viewport.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const rect = viewport.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const old = view.z;
+    const factor = Math.exp(-e.deltaY * 0.0015);
+    const next = Math.min(2.5, Math.max(0.2, old * factor));
+    // Anchor zoom on cursor
+    view.x = mx - (mx - view.x) * (next / old);
+    view.y = my - (my - view.y) * (next / old);
+    view.z = next;
+    applyTransform();
+  }, { passive: false });
+
+  // Double-click empty area => create node (edit mode)
+  viewport.addEventListener("dblclick", (e) => {
+    if (!editMode) return;
+    const t = e.target;
+    if (t.closest(".node")) return;
+    const rect = viewport.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const wx = (mx - view.x) / view.z;
+    const wy = (my - view.y) / view.z;
+    // Determine nearest column to pick a phase pre-fill
+    let phaseId = state.phases[0]?.id || "phase1";
+    if (layoutCache && layoutCache.columns.size) {
+      const sortedDepths = Array.from(layoutCache.columns.keys()).sort((a,b) => a-b);
+      let bestD = sortedDepths[0];
+      let bestDx = Infinity;
+      for (const d of sortedDepths) {
+        const cx = PAD + d * COL_W + NODE_W / 2;
+        const dx = Math.abs(cx - wx);
+        if (dx < bestDx) { bestDx = dx; bestD = d; }
+      }
+      const arr = layoutCache.columns.get(bestD);
+      if (arr && arr.length) {
+        // most common phase in that column
+        const counts = {};
+        for (const n of arr) counts[n.phaseId] = (counts[n.phaseId] || 0) + 1;
+        let top = null, topC = 0;
+        for (const k of Object.keys(counts)) if (counts[k] > topC) { top = k; topC = counts[k]; }
+        if (top) phaseId = top;
+      }
+    }
+    const id = createNode({ phaseId });
+    selectNode(id);
+  });
+})();
+
+/* ====================== Selection & side panel ====================== */
+function selectNode(id) {
+  selectedId = id;
+  markSelectedDOM();
+  drawConnections();
+  if (id) openSide(id);
+  else closeSide();
+}
+
+function markSelectedDOM() {
+  for (const el of canvas.querySelectorAll(".node.selected")) el.classList.remove("selected");
+  if (selectedId) {
+    const el = canvas.querySelector(`.node[data-id="${CSS.escape(selectedId)}"]`);
+    if (el) el.classList.add("selected");
+  }
+}
+
+function rebuildPhaseDropdown() {
+  const sel = $("fPhase");
+  sel.innerHTML = "";
+  for (const p of state.phases) {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.title;
+    sel.appendChild(opt);
+  }
+}
+
+function openSide(id) {
+  const n = getNode(id);
+  if (!n) return;
+  const phase = getPhase(n.phaseId);
+  side.style.setProperty("--phase-color", phase.color);
+  $("sidePhaseDot").style.background = phase.color;
+  $("sideIdTag").textContent = n.id;
+  $("fTitle").value = n.title;
+  $("fPhase").value = n.phaseId;
+  $("fType").value = n.type;
+  $("fStatus").value = n.status;
+  $("fDescription").value = n.description || "";
+  $("gAirGap").value     = numOrEmpty(n.geometry.airGapMm);
+  $("gDuctHeight").value = numOrEmpty(n.geometry.ductHeightMm);
+  $("gRodTop").value     = numOrEmpty(n.geometry.rodCountTop);
+  $("gRodBottom").value  = numOrEmpty(n.geometry.rodCountBottom);
+  $("gWeight").value     = numOrEmpty(n.geometry.weightG);
+  $("gProp").value       = numOrEmpty(n.geometry.propellerInches);
+  $("gMotorSp").value    = numOrEmpty(n.geometry.motorSpacingMm);
+  $("fSoundLink").value = n.soundVisualizerLink || "";
+  $("fNotes").value = n.notes || "";
+  renderParentChips(n);
+  renderChildChips(n);
+  side.classList.add("open");
+}
+
+function numOrEmpty(v) { return v == null ? "" : String(v); }
+
+function closeSide() {
+  side.classList.remove("open");
+}
+
+function renderParentChips(n) {
+  const wrap = $("parentChips");
+  wrap.innerHTML = "";
+  for (const pid of n.parents) {
+    const p = getNode(pid);
+    const label = p ? p.title : pid;
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.dataset.id = pid;
+    chip.innerHTML = `<span>${escapeHtml(label)}</span><span class="x" title="Remove parent">×</span>`;
+    chip.querySelector("span:first-child").addEventListener("click", () => {
+      if (getNode(pid)) selectNode(pid);
+    });
+    chip.querySelector(".x").addEventListener("click", (e) => {
+      e.stopPropagation();
+      n.parents = n.parents.filter(x => x !== pid);
+      markDirty();
+      render();
+      renderParentChips(n);
+      renderChildChips(n);
+    });
+    wrap.appendChild(chip);
+  }
+  // Repopulate "add parent" select
+  const sel = $("addParentSelect");
+  sel.innerHTML = "";
+  const blank = document.createElement("option");
+  blank.value = ""; blank.textContent = "Select node…";
+  sel.appendChild(blank);
+  for (const other of state.nodes) {
+    if (other.id === n.id) continue;
+    if (n.parents.includes(other.id)) continue;
+    const opt = document.createElement("option");
+    opt.value = other.id;
+    opt.textContent = other.title;
+    sel.appendChild(opt);
+  }
+}
+
+function renderChildChips(n) {
+  const wrap = $("childChips");
+  wrap.innerHTML = "";
+  const children = state.nodes.filter(x => x.parents.includes(n.id));
+  if (!children.length) {
+    const e = document.createElement("span");
+    e.style.color = "var(--text-faint)";
+    e.style.fontSize = "12px";
+    e.textContent = "No children";
+    wrap.appendChild(e);
+    return;
+  }
+  for (const c of children) {
+    const chip = document.createElement("span");
+    chip.className = "chip readonly";
+    chip.dataset.id = c.id;
+    chip.textContent = c.title;
+    chip.addEventListener("click", () => selectNode(c.id));
+    wrap.appendChild(chip);
+  }
+}
+
+/* ====================== Side panel editing wiring ====================== */
+function bindSideInputs() {
+  $("sideClose").addEventListener("click", () => selectNode(null));
+
+  $("fTitle").addEventListener("input", () => {
+    const n = getNode(selectedId); if (!n) return;
+    n.title = $("fTitle").value;
+    markDirty();
+    updateNodeDom(n);
+  });
+  $("fPhase").addEventListener("change", () => {
+    const n = getNode(selectedId); if (!n) return;
+    n.phaseId = $("fPhase").value;
+    markDirty();
+    layoutCache = null;
+    render();
+    selectNode(n.id);
+  });
+  $("fType").addEventListener("change", () => {
+    const n = getNode(selectedId); if (!n) return;
+    n.type = $("fType").value;
+    markDirty();
+    updateNodeDom(n);
+  });
+  $("fStatus").addEventListener("change", () => {
+    const n = getNode(selectedId); if (!n) return;
+    n.status = $("fStatus").value;
+    markDirty();
+    updateNodeDom(n);
+  });
+  $("fDescription").addEventListener("input", () => {
+    const n = getNode(selectedId); if (!n) return;
+    n.description = $("fDescription").value;
+    markDirty();
+    applySearchFilter();
+  });
+  $("fNotes").addEventListener("input", () => {
+    const n = getNode(selectedId); if (!n) return;
+    n.notes = $("fNotes").value;
+    markDirty();
+  });
+  $("fSoundLink").addEventListener("input", () => {
+    const n = getNode(selectedId); if (!n) return;
+    n.soundVisualizerLink = $("fSoundLink").value;
+    markDirty();
+  });
+  $("fSoundOpen").addEventListener("click", () => {
+    const n = getNode(selectedId); if (!n) return;
+    const url = (n.soundVisualizerLink || "").trim();
+    if (!url) { showToast("No link set", "error"); return; }
+    window.open(url, "_blank", "noopener");
+  });
+
+  const geomBind = (inputId, key) => {
+    $(inputId).addEventListener("input", () => {
+      const n = getNode(selectedId); if (!n) return;
+      const raw = $(inputId).value;
+      if (raw === "" || raw == null) n.geometry[key] = null;
+      else {
+        const v = Number(raw);
+        n.geometry[key] = Number.isFinite(v) ? v : null;
+      }
+      markDirty();
+      updateNodeDom(n);
+    });
+  };
+  geomBind("gAirGap",     "airGapMm");
+  geomBind("gDuctHeight", "ductHeightMm");
+  geomBind("gRodTop",     "rodCountTop");
+  geomBind("gRodBottom",  "rodCountBottom");
+  geomBind("gWeight",     "weightG");
+  geomBind("gProp",       "propellerInches");
+  geomBind("gMotorSp",    "motorSpacingMm");
+
+  $("addParentBtn").addEventListener("click", () => {
+    const n = getNode(selectedId); if (!n) return;
+    const pid = $("addParentSelect").value;
+    if (!pid) return;
+    if (pid === n.id) { showToast("Cannot parent to self", "error"); return; }
+    if (createsCycle(n.id, pid)) {
+      showToast("That would create a cycle", "error");
+      return;
+    }
+    if (!n.parents.includes(pid)) {
+      n.parents.push(pid);
+      markDirty();
+      layoutCache = null;
+      render();
+      renderParentChips(n);
+      renderChildChips(n);
+    }
+  });
+
+  $("btnDuplicate").addEventListener("click", () => {
+    const n = getNode(selectedId); if (!n) return;
+    const id = duplicateNode(n.id);
+    if (id) selectNode(id);
+  });
+  $("btnDelete").addEventListener("click", () => {
+    const n = getNode(selectedId); if (!n) return;
+    if (confirm(`Delete "${n.title}"? This cannot be undone here (but git has history).`)) {
+      deleteNode(n.id);
+    }
+  });
+}
+
+function updateNodeDom(n) {
+  // Re-render that single card without redoing layout
+  const el = canvas.querySelector(`.node[data-id="${CSS.escape(n.id)}"]`);
+  if (!el) { render(); return; }
+  const pos = layoutCache.positions.get(n.id);
+  const phase = getPhase(n.phaseId);
+  el.style.setProperty("--phase-color", phase.color);
+  el.querySelector(".title").textContent = n.title;
+  el.querySelector(".title").title = n.title;
+  const pill = el.querySelector(".status-pill");
+  pill.className = "status-pill " + n.status;
+  pill.textContent = n.status;
+  el.querySelector(".type-label").textContent = n.type;
+  const gl = formatGeom(n.geometry);
+  const ge = el.querySelector(".geom");
+  ge.textContent = gl || "—";
+  ge.title = gl || "";
+  // refresh side header dot
+  if (selectedId === n.id) {
+    $("sidePhaseDot").style.background = phase.color;
+    side.style.setProperty("--phase-color", phase.color);
+  }
+  applySearchFilter();
+}
+
+/* ====================== Node ops ====================== */
+function createNode(opts) {
+  opts = opts || {};
+  const id = genId();
+  const n = {
+    id,
+    phaseId: opts.phaseId || state.phases[0]?.id || "phase1",
+    title: opts.title || "New node",
+    description: "",
+    type: opts.type || "test",
+    status: "planned",
+    parents: Array.isArray(opts.parents) ? opts.parents.slice() : [],
+    geometry: newGeometry(),
+    soundVisualizerLink: "",
+    notes: ""
+  };
+  state.nodes.push(n);
+  markDirty();
+  layoutCache = null;
+  render();
+  return id;
+}
+
+function duplicateNode(id) {
+  const n = getNode(id); if (!n) return null;
+  const id2 = genId();
+  const copy = JSON.parse(JSON.stringify(n));
+  copy.id = id2;
+  copy.title = n.title + " (copy)";
+  state.nodes.push(copy);
+  markDirty();
+  layoutCache = null;
+  render();
+  return id2;
+}
+
+function deleteNode(id) {
+  state.nodes = state.nodes.filter(n => n.id !== id);
+  // Remove orphaned parent refs
+  for (const n of state.nodes) {
+    n.parents = n.parents.filter(p => p !== id);
+  }
+  if (selectedId === id) {
+    selectedId = null;
+    closeSide();
+  }
+  markDirty();
+  layoutCache = null;
+  render();
+}
+
+function ancestorsOf(id, set) {
+  set = set || new Set();
+  const n = getNode(id); if (!n) return set;
+  for (const p of n.parents) {
+    if (!set.has(p)) {
+      set.add(p);
+      ancestorsOf(p, set);
+    }
+  }
+  return set;
+}
+
+function createsCycle(childId, proposedParentId) {
+  if (childId === proposedParentId) return true;
+  // If childId is an ancestor of proposedParentId, adding it would cycle.
+  const anc = ancestorsOf(proposedParentId);
+  return anc.has(childId);
+}
+
+/* ====================== Canvas interactions: select / drag / link / right-click ====================== */
+(function setupNodeInteractions() {
+  let dragState = null; // {id, mode: 'reorder' | 'link', ...}
+
+  canvas.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    const nodeEl = e.target.closest(".node");
+    if (!nodeEl) return;
+    const id = nodeEl.dataset.id;
+    if (e.target.dataset && e.target.dataset.role === "add-child") {
+      e.preventDefault(); e.stopPropagation();
+      const newId = createNode({ parents: [id], phaseId: getNode(id)?.phaseId });
+      selectNode(newId);
+      return;
+    }
+    if (e.target.dataset && e.target.dataset.role === "link-handle") {
+      e.preventDefault(); e.stopPropagation();
+      dragState = { id, mode: "link", startX: e.clientX, startY: e.clientY };
+      window.addEventListener("mousemove", onLinkMove);
+      window.addEventListener("mouseup",   onLinkUp);
+      return;
+    }
+    if (editMode) {
+      // Drag to reorder
+      e.preventDefault(); e.stopPropagation();
+      dragState = {
+        id, mode: "reorder",
+        startX: e.clientX, startY: e.clientY,
+        moved: false,
+        el: nodeEl
+      };
+      window.addEventListener("mousemove", onReorderMove);
+      window.addEventListener("mouseup",   onReorderUp);
+    } else {
+      // Single click select
+      e.stopPropagation();
+      selectNode(id);
+    }
+  });
+
+  // Non-edit-mode click selection on canvas (capture clicks on a fresh listener too)
+  canvas.addEventListener("click", (e) => {
+    const nodeEl = e.target.closest(".node");
+    if (!nodeEl) return;
+    if (editMode) {
+      // If we just performed a drag, suppress click select-only? Allow select anyway.
+      selectNode(nodeEl.dataset.id);
+    }
+  });
+
+  // Right-click context menu
+  canvas.addEventListener("contextmenu", (e) => {
+    const nodeEl = e.target.closest(".node");
+    if (!nodeEl) return;
+    e.preventDefault();
+    const id = nodeEl.dataset.id;
+    openContextMenu(e.clientX, e.clientY, id);
+  });
+
+  // ---- link drag ----
+  function onLinkMove(e) {
+    if (!dragState || dragState.mode !== "link") return;
+    const rect = viewport.getBoundingClientRect();
+    linkDragSvg.setAttribute("width", window.innerWidth);
+    linkDragSvg.setAttribute("height", window.innerHeight);
+    linkDragSvg.style.left = "0px";
+    linkDragSvg.style.top  = "0px";
+    // Compute source point in screen coords
+    const fromEl = canvas.querySelector(`.node[data-id="${CSS.escape(dragState.id)}"]`);
+    if (!fromEl) return;
+    const fr = fromEl.getBoundingClientRect();
+    const x1 = fr.right;
+    const y1 = fr.top + fr.height / 2;
+    const x2 = e.clientX;
+    const y2 = e.clientY;
+    const dx = Math.max(30, (x2 - x1) * 0.5);
+    const d = `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`;
+    linkDragSvg.querySelector("path").setAttribute("d", d);
+    // Highlight target
+    document.querySelectorAll(".node.drop-target").forEach(el => el.classList.remove("drop-target"));
+    const overEl = document.elementFromPoint(e.clientX, e.clientY);
+    const targetNode = overEl ? overEl.closest(".node") : null;
+    if (targetNode && targetNode.dataset.id !== dragState.id) {
+      targetNode.classList.add("drop-target");
+    }
+  }
+  function onLinkUp(e) {
+    if (!dragState || dragState.mode !== "link") return;
+    window.removeEventListener("mousemove", onLinkMove);
+    window.removeEventListener("mouseup",   onLinkUp);
+    linkDragSvg.querySelector("path").setAttribute("d", "");
+    document.querySelectorAll(".node.drop-target").forEach(el => el.classList.remove("drop-target"));
+
+    const fromId = dragState.id;
+    const overEl = document.elementFromPoint(e.clientX, e.clientY);
+    const targetEl = overEl ? overEl.closest(".node") : null;
+    dragState = null;
+    if (!targetEl) return;
+    const toId = targetEl.dataset.id;
+    if (toId === fromId) return;
+    // Adding "fromId" as a parent of "toId"
+    const toNode = getNode(toId); if (!toNode) return;
+    if (createsCycle(toId, fromId)) {
+      showToast("That would create a cycle", "error");
+      return;
+    }
+    if (!toNode.parents.includes(fromId)) {
+      toNode.parents.push(fromId);
+      markDirty();
+      layoutCache = null;
+      render();
+      if (selectedId === toId) renderParentChips(toNode);
+      showToast("Linked as parent", "success");
+    }
+  }
+
+  // ---- reorder drag ----
+  function onReorderMove(e) {
+    if (!dragState || dragState.mode !== "reorder") return;
+    const dx = Math.abs(e.clientX - dragState.startX);
+    const dy = Math.abs(e.clientY - dragState.startY);
+    if (!dragState.moved && (dx > 4 || dy > 4)) {
+      dragState.moved = true;
+      dragState.el.classList.add("dragging");
+    }
+    if (!dragState.moved) return;
+    // Determine row in this column by current y in world coords
+    const rect = viewport.getBoundingClientRect();
+    const wy = ((e.clientY - rect.top) - view.y) / view.z;
+    const node = getNode(dragState.id);
+    if (!node || !layoutCache) return;
+    const pos = layoutCache.positions.get(node.id);
+    if (!pos) return;
+    const depth = pos.depth;
+    const col = layoutCache.columns.get(depth);
+    if (!col) return;
+    let targetRow = Math.round((wy - PAD - HEADER_OFFSET) / ROW_H);
+    targetRow = Math.max(0, Math.min(col.length - 1, targetRow));
+    const currentIdx = col.findIndex(n => n.id === node.id);
+    if (currentIdx >= 0 && targetRow !== currentIdx) {
+      // Reorder underlying `state.nodes` so that within this column the node moves.
+      // Strategy: remove and reinsert near target while preserving overall order.
+      // We rebuild state.nodes ordering: collect nodes by depth+row excluding moved node, then insert
+      const colOrder = col.slice();
+      colOrder.splice(currentIdx, 1);
+      colOrder.splice(targetRow, 0, node);
+      // Persist by giving these nodes manual sort keys? Simpler: just swap their order in state.nodes
+      // We reorder state.nodes so that within the column they appear in colOrder.
+      reorderColumn(depth, colOrder.map(n => n.id));
+      layoutCache = null;
+      render();
+    }
+  }
+  function onReorderUp(e) {
+    if (!dragState || dragState.mode !== "reorder") return;
+    window.removeEventListener("mousemove", onReorderMove);
+    window.removeEventListener("mouseup",   onReorderUp);
+    const el = dragState.el;
+    if (el) el.classList.remove("dragging");
+    if (!dragState.moved) {
+      // It was a click in edit mode -> select
+      selectNode(dragState.id);
+    } else {
+      markDirty();
+    }
+    dragState = null;
+  }
+
+  // Manual override for column ordering — we attach a `_order` per node so re-renders preserve user intent.
+  function reorderColumn(depth, idsInOrder) {
+    // Update `_order` for these ids; layout() sort uses (_order, phase, title)
+    idsInOrder.forEach((id, idx) => {
+      const n = getNode(id);
+      if (n) n._order = idx;
+    });
+  }
+})();
+
+/* Override layout sort to respect _order when present */
+const _origLayout = layout;
+layout = function() {
+  const depths = computeDepths();
+  const columns = new Map();
+  const phaseOrder = new Map(state.phases.map((p, i) => [p.id, i]));
+  for (const n of state.nodes) {
+    const d = depths.get(n.id) || 0;
+    if (!columns.has(d)) columns.set(d, []);
+    columns.get(d).push(n);
+  }
+  const positions = new Map();
+  let maxRows = 0;
+  const sortedDepths = Array.from(columns.keys()).sort((a, b) => a - b);
+  let maxDepth = sortedDepths.length ? sortedDepths[sortedDepths.length - 1] : 0;
+  for (const d of sortedDepths) {
+    const arr = columns.get(d);
+    arr.sort((a, b) => {
+      const oa = (a._order != null) ? a._order : 1e9;
+      const ob = (b._order != null) ? b._order : 1e9;
+      if (oa !== ob) return oa - ob;
+      const pa = phaseOrder.has(a.phaseId) ? phaseOrder.get(a.phaseId) : 99;
+      const pb = phaseOrder.has(b.phaseId) ? phaseOrder.get(b.phaseId) : 99;
+      if (pa !== pb) return pa - pb;
+      return a.title.localeCompare(b.title);
+    });
+    arr.forEach((n, i) => {
+      const x = PAD + d * COL_W;
+      const y = PAD + HEADER_OFFSET + i * ROW_H;
+      positions.set(n.id, { x, y, depth: d, row: i });
+    });
+    if (arr.length > maxRows) maxRows = arr.length;
+  }
+  const width  = PAD * 2 + (maxDepth + 1) * COL_W;
+  const height = PAD * 2 + HEADER_OFFSET + maxRows * ROW_H;
+  return { columns, positions, width, height, maxDepth };
+};
+
+/* ====================== Context menu ====================== */
+function openContextMenu(x, y, nodeId) {
+  ctxMenu.innerHTML = "";
+  const mk = (label, fn, cls) => {
+    const it = document.createElement("div");
+    it.className = "item" + (cls ? " " + cls : "");
+    it.textContent = label;
+    it.addEventListener("click", () => { closeContextMenu(); fn(); });
+    ctxMenu.appendChild(it);
+  };
+  mk("Add child", () => {
+    const id = createNode({ parents: [nodeId], phaseId: getNode(nodeId)?.phaseId });
+    selectNode(id);
+  });
+  mk("Duplicate", () => {
+    const id = duplicateNode(nodeId);
+    if (id) selectNode(id);
+  });
+  const sep = document.createElement("div"); sep.className = "sep"; ctxMenu.appendChild(sep);
+  mk("Delete…", () => {
+    const n = getNode(nodeId);
+    if (n && confirm(`Delete "${n.title}"?`)) deleteNode(nodeId);
+  }, "danger");
+
+  ctxMenu.style.left = x + "px";
+  ctxMenu.style.top  = y + "px";
+  ctxMenu.classList.add("open");
+}
+function closeContextMenu() {
+  ctxMenu.classList.remove("open");
+}
+window.addEventListener("click", (e) => {
+  if (!ctxMenu.contains(e.target)) closeContextMenu();
+});
+
+/* ====================== Search ====================== */
+function applySearchFilter() {
+  const term = searchTerm.trim().toLowerCase();
+  for (const el of canvas.querySelectorAll(".node")) {
+    if (!term) { el.classList.remove("dim"); continue; }
+    const id = el.dataset.id;
+    const n = getNode(id); if (!n) continue;
+    const hay = (n.title + " " + (n.description || "")).toLowerCase();
+    if (hay.includes(term)) el.classList.remove("dim");
+    else el.classList.add("dim");
+  }
+}
+
+$("searchInput").addEventListener("input", (e) => {
+  searchTerm = e.target.value;
+  applySearchFilter();
+});
+
+/* ====================== Saving / loading via File System Access ====================== */
+async function doSave() {
+  const json = JSON.stringify(state, null, 2);
+  // Strip transient fields like _order before save? We want layout persistence to survive, so keep _order.
+  // (Spec doesn't forbid extra props; sanitize() preserves graceful loading.)
+  try {
+    if (fileHandle && fileHandle.createWritable) {
+      const w = await fileHandle.createWritable();
+      await w.write(json);
+      await w.close();
+      dirty = false; flashSaved();
+      showToast("Saved to data.json", "success");
+      return;
+    }
+    if (window.showSaveFilePicker) {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: "data.json",
+        types: [{ description: "JSON", accept: { "application/json": [".json"] } }]
+      });
+      const w = await handle.createWritable();
+      await w.write(json);
+      await w.close();
+      fileHandle = handle;
+      dirty = false; flashSaved();
+      showToast("Saved", "success");
+      return;
+    }
+    // Fallback: download
+    const blob = new Blob([json], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "data.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(a.href);
+    dirty = false; flashSaved();
+    showToast("Downloaded data.json", "success");
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+    console.error(err);
+    showToast("Save failed: " + (err.message || err), "error");
+  }
+}
+
+async function doOpen() {
+  try {
+    if (window.showOpenFilePicker) {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+        multiple: false
+      });
+      const file = await handle.getFile();
+      const text = await file.text();
+      const data = JSON.parse(text);
+      fileHandle = handle;
+      setState(sanitize(data));
+      showToast("Loaded " + (file.name || "data.json"), "success");
+    } else {
+      // Fallback: hidden input
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json,.json";
+      input.addEventListener("change", async () => {
+        if (!input.files || !input.files[0]) return;
+        const text = await input.files[0].text();
+        try {
+          const data = JSON.parse(text);
+          setState(sanitize(data));
+          showToast("Loaded (read-only in this browser)", "success");
+        } catch (e) {
+          showToast("Invalid JSON: " + e.message, "error");
+        }
+      });
+      input.click();
+    }
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+    console.error(err);
+    showToast("Open failed: " + (err.message || err), "error");
+  }
+}
+
+/* ====================== Git integration ====================== */
+const GIT_ENABLED = (location.protocol === "http:" || location.protocol === "https:");
+
+function gitToast(msg, level) {
+  // level: "success" | "error" | "neutral"
+  const box = $("gitToasts");
+  if (!box) return;
+  const el = document.createElement("div");
+  el.className = "gt " + (level || "neutral");
+  el.textContent = msg;
+  box.appendChild(el);
+  // animate in
+  requestAnimationFrame(() => el.classList.add("show"));
+  const ttl = 4000;
+  setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 250);
+  }, ttl);
+}
+
+async function gitApi(method, endpoint, body) {
+  try {
+    const opts = { method, headers: {} };
+    if (body !== undefined) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    const res = await fetch(endpoint, opts);
+    let data = null;
+    const text = await res.text();
+    try { data = text ? JSON.parse(text) : null; }
+    catch (e) { return { ok: false, data: null, error: "Bad JSON from server: " + e.message }; }
+    if (!res.ok) {
+      const err = (data && (data.error || data.message)) || ("HTTP " + res.status);
+      return { ok: false, data, error: err };
+    }
+    return { ok: true, data, error: null };
+  } catch (e) {
+    return { ok: false, data: null, error: e.message || String(e) };
+  }
+}
+
+// Repo-relative path to data.json — supplied by /api/git/status (data_json_rel).
+// Cached so the commit and history calls can use it without re-fetching.
+let gitDataJsonRel = null;
+function gitDataJsonRelPath() { return gitDataJsonRel || null; }
+
+function gitPanelEl() { return $("gitPanel"); }
+
+function gitPanelOpen() { return gitPanelEl().classList.contains("open"); }
+
+function closeGitPanel() {
+  const p = gitPanelEl();
+  p.classList.remove("open");
+  p.innerHTML = "";
+}
+
+async function openGitPanel() {
+  const p = gitPanelEl();
+  p.classList.add("open");
+  renderGitActionsView({ branch: "…", ahead: 0, behind: 0, head: "", head_msg: "", dirty_files: [] }, true);
+  const res = await gitApi("GET", "/api/git/status");
+  if (!res.ok) {
+    p.innerHTML = `<div class="git-status-box"><span style="color:var(--bad)">Status failed: ${escapeHtml(res.error || "")}</span></div>`;
+    return;
+  }
+  renderGitActionsView(res.data, false);
+}
+
+function renderGitStatusBox(status) {
+  const branch = status.branch || "(detached)";
+  const ahead = status.ahead || 0;
+  const behind = status.behind || 0;
+  const head = status.head || "";
+  const headMsg = status.head_msg || "";
+  const dataRel = gitDataJsonRelPath();
+  const dirty = Array.isArray(status.dirty_files) ? status.dirty_files : [];
+  // Highlight dirty entries that match the data.json sibling, but show all.
+  let dirtyHtml = "";
+  if (dirty.length === 0) {
+    dirtyHtml = `<div class="empty-line">no uncommitted changes</div>`;
+  } else {
+    dirtyHtml = `<div class="dirty-list">` +
+      dirty.map(f => {
+        const isData = dataRel && (f === dataRel || f.endsWith("/data.json") || f === "data.json");
+        return `<div class="f" style="${isData ? "color:var(--selected)" : ""}">${escapeHtml(f)}</div>`;
+      }).join("") +
+      `</div>`;
+  }
+  let aheadBehindHtml = "";
+  if (ahead || behind) {
+    aheadBehindHtml =
+      (ahead  ? `<span class="ahead">↑${ahead}</span> ` : "") +
+      (behind ? `<span class="behind">↓${behind}</span> ` : "");
+  } else {
+    aheadBehindHtml = `<span style="color:var(--text-faint)">in sync</span> `;
+  }
+  return `
+    <div class="git-status-box">
+      <div><span class="branch">${escapeHtml(branch)}</span> &nbsp; ${aheadBehindHtml}</div>
+      <div class="head"><span style="color:var(--accent);font-family:ui-monospace,Menlo,monospace">${escapeHtml(head)}</span> ${escapeHtml(headMsg)}</div>
+      ${dirtyHtml}
+    </div>`;
+}
+
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function renderGitActionsView(status, isLoading) {
+  if (status && typeof status.data_json_rel === "string" && status.data_json_rel) {
+    gitDataJsonRel = status.data_json_rel;
+  }
+  const p = gitPanelEl();
+  p.innerHTML =
+    renderGitStatusBox(status) +
+    `<div class="git-actions">
+      <button id="gitBtnPull"    ${isLoading ? "disabled" : ""}>Pull</button>
+      <button id="gitBtnCommit"  ${isLoading ? "disabled" : ""}>Commit…</button>
+      <button id="gitBtnPush"    ${isLoading ? "disabled" : ""}>Push</button>
+      <button id="gitBtnHistory" ${isLoading ? "disabled" : ""}>History</button>
+     </div>`;
+  if (isLoading) return;
+  $("gitBtnPull").addEventListener("click", gitDoPull);
+  $("gitBtnCommit").addEventListener("click", showCommitForm);
+  $("gitBtnPush").addEventListener("click", gitDoPush);
+  $("gitBtnHistory").addEventListener("click", showHistoryView);
+}
+
+async function refreshGitStatusOnly() {
+  const res = await gitApi("GET", "/api/git/status");
+  if (res.ok) renderGitActionsView(res.data, false);
+}
+
+async function gitDoPull() {
+  if (dirty) {
+    const ok = confirm("You have unsaved changes — pulling will discard them. Continue?");
+    if (!ok) return;
+  }
+  gitToast("Pulling…", "neutral");
+  const res = await gitApi("POST", "/api/git/pull");
+  if (!res.ok) {
+    gitToast("Pull failed: " + (res.error || "unknown error"), "error");
+    refreshGitStatusOnly();
+    return;
+  }
+  if (res.data && res.data.ok === false) {
+    gitToast("Pull failed: " + (res.data.error || "unknown"), "error");
+    refreshGitStatusOnly();
+    return;
+  }
+  // Re-fetch data.json (cache-bust) and reload state via existing sanitize path.
+  try {
+    const r = await fetch("./data.json?ts=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const json = await r.json();
+    setState(sanitize(json));
+    gitToast("Pulled · data.json reloaded", "success");
+  } catch (e) {
+    gitToast("Pulled, but reload failed: " + (e.message || e), "error");
+  }
+  refreshGitStatusOnly();
+}
+
+function showCommitForm() {
+  const p = gitPanelEl();
+  const defaultMsg = "tree: update data.json";
+  // Keep the status box visible above the form by re-rendering with no status fetch.
+  // We don't have last status cached; just hide the actions and show the form below current box.
+  const statusBox = p.querySelector(".git-status-box");
+  const formHtml = `
+    <div class="commit-form" id="gitCommitForm">
+      <input id="gitCommitMsg" type="text" placeholder="Commit message" value="${escapeHtml(defaultMsg)}" />
+      <div class="row">
+        <button id="gitCommitCancel">Cancel</button>
+        <button id="gitCommitGo" class="primary">Commit</button>
+      </div>
+    </div>`;
+  if (statusBox) {
+    // Replace everything after the status box with the form.
+    p.innerHTML = statusBox.outerHTML + formHtml;
+  } else {
+    p.innerHTML = formHtml;
+  }
+  const input = $("gitCommitMsg");
+  input.focus(); input.select();
+  $("gitCommitCancel").addEventListener("click", refreshGitStatusOnly);
+  $("gitCommitGo").addEventListener("click", gitDoCommit);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); gitDoCommit(); }
+    if (e.key === "Escape") { e.preventDefault(); refreshGitStatusOnly(); }
+  });
+}
+
+async function gitDoCommit() {
+  const msgEl = $("gitCommitMsg");
+  if (!msgEl) return;
+  const message = msgEl.value.trim();
+  if (!message) { gitToast("Commit message is required", "error"); return; }
+  const rel = gitDataJsonRelPath();
+  // If we don't have a path yet (status hasn't loaded), let the server resolve it.
+  const body = rel ? { message, paths: [rel] } : { message };
+  const res = await gitApi("POST", "/api/git/commit", body);
+  if (!res.ok) {
+    gitToast("Commit failed: " + (res.error || "unknown"), "error");
+    return;
+  }
+  if (res.data && res.data.ok === false) {
+    if (res.data.error === "nothing to commit") {
+      gitToast("Nothing to commit", "neutral");
+    } else {
+      gitToast("Commit failed: " + (res.data.error || "unknown"), "error");
+    }
+    refreshGitStatusOnly();
+    return;
+  }
+  const sh = (res.data && res.data.commit) || "";
+  gitToast("Committed " + sh, "success");
+  refreshGitStatusOnly();
+}
+
+async function gitDoPush() {
+  gitToast("Pushing…", "neutral");
+  const res = await gitApi("POST", "/api/git/push");
+  if (!res.ok) { gitToast("Push failed: " + (res.error || "unknown"), "error"); refreshGitStatusOnly(); return; }
+  if (res.data && res.data.ok === false) {
+    gitToast("Push failed: " + (res.data.error || "unknown"), "error");
+    refreshGitStatusOnly();
+    return;
+  }
+  gitToast("Pushed", "success");
+  refreshGitStatusOnly();
+}
+
+async function showHistoryView() {
+  const p = gitPanelEl();
+  let rel = gitDataJsonRelPath();
+  if (!rel) {
+    // Status hasn't loaded yet — fetch it so we get data_json_rel from the server.
+    const s = await gitApi("GET", "/api/git/status");
+    if (s.ok && s.data && s.data.data_json_rel) {
+      gitDataJsonRel = s.data.data_json_rel;
+      rel = gitDataJsonRel;
+    }
+  }
+  if (!rel) { gitToast("Could not resolve data.json path", "error"); return; }
+  p.innerHTML = `<div class="git-status-box"><span style="color:var(--text-dim)">Loading history…</span></div>`;
+  const res = await gitApi("GET", "/api/git/log?path=" + encodeURIComponent(rel) + "&limit=20");
+  let html = "";
+  if (!res.ok) {
+    html = `<div class="git-status-box"><span style="color:var(--bad)">${escapeHtml(res.error || "")}</span></div>`;
+  } else {
+    const entries = (res.data && res.data.entries) || [];
+    if (entries.length === 0) {
+      html = `<div class="git-status-box"><span class="empty-line">no commits for this path</span></div>`;
+    } else {
+      html = `<div class="history-list">` +
+        entries.map(e => {
+          const d = (e.date || "").replace("T", " ").slice(0, 19);
+          return `<div class="history-entry">
+            <div class="meta"><span class="hash">${escapeHtml(e.hash)}</span> · ${escapeHtml(d)} · ${escapeHtml(e.author)}</div>
+            <div class="subject">${escapeHtml(e.subject)}</div>
+          </div>`;
+        }).join("") +
+        `</div>`;
+    }
+  }
+  p.innerHTML = html + `<div class="git-actions" style="margin-top:10px"><button id="gitBackBtn">Back</button></div>`;
+  $("gitBackBtn").addEventListener("click", refreshGitStatusOnly);
+}
+
+// Wire up toolbar Git button + outside-click + Esc.
+(function initGitButton() {
+  const btn = $("btnGit");
+  if (!btn) return;
+  if (!GIT_ENABLED) {
+    btn.disabled = true;
+    btn.title = "Run `python3 serve.py` to enable git actions";
+    return;
+  }
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (gitPanelOpen()) closeGitPanel();
+    else openGitPanel();
+  });
+  document.addEventListener("click", (e) => {
+    if (!gitPanelOpen()) return;
+    const panel = gitPanelEl();
+    if (panel.contains(e.target) || btn.contains(e.target)) return;
+    closeGitPanel();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && gitPanelOpen()) {
+      closeGitPanel();
+    }
+  }, true);
+})();
+
+/* ====================== Toolbar wiring ====================== */
+$("btnSave").addEventListener("click", doSave);
+$("btnOpen").addEventListener("click", doOpen);
+$("btnOpenEmpty").addEventListener("click", doOpen);
+$("btnNewEmpty").addEventListener("click", () => {
+  setState(emptyState(), { markDirty: true });
+});
+$("btnAddNode").addEventListener("click", () => {
+  const id = createNode({});
+  selectNode(id);
+});
+$("btnEditMode").addEventListener("click", () => {
+  editMode = !editMode;
+  $("btnEditMode").classList.toggle("active", editMode);
+  document.body.classList.toggle("edit-mode", editMode);
+  viewport.classList.toggle("edit-mode", editMode);
+});
+$("btnHelp").addEventListener("click", () => $("helpOverlay").classList.add("open"));
+$("closeHelp").addEventListener("click", () => $("helpOverlay").classList.remove("open"));
+$("helpOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "helpOverlay") $("helpOverlay").classList.remove("open");
+});
+
+/* ====================== Keyboard ====================== */
+window.addEventListener("keydown", (e) => {
+  const tgt = e.target;
+  const isField = tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || tgt.tagName === "SELECT" || tgt.isContentEditable);
+
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+    e.preventDefault();
+    doSave();
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+    e.preventDefault();
+    $("searchInput").focus();
+    $("searchInput").select();
+    return;
+  }
+  if (e.key === "Escape") {
+    if (ctxMenu.classList.contains("open")) { closeContextMenu(); return; }
+    if ($("helpOverlay").classList.contains("open")) { $("helpOverlay").classList.remove("open"); return; }
+    if (side.classList.contains("open")) { selectNode(null); return; }
+  }
+  if ((e.key === "Delete" || e.key === "Backspace") && selectedId && !isField) {
+    const n = getNode(selectedId);
+    if (n && confirm(`Delete "${n.title}"?`)) {
+      e.preventDefault();
+      deleteNode(n.id);
+    }
+  }
+});
+
+// Warn on unload if dirty
+window.addEventListener("beforeunload", (e) => {
+  if (dirty) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
+
+/* ====================== Init ====================== */
+bindSideInputs();
+rebuildPhaseDropdown();
+updateSaveStatus();
+
+/* ====================== URL hash state hooks ====================== */
+// Parse `#key=value&flag&key2=value2` into a Map. Bare tokens become flag=true.
+function parseHashState() {
+  const out = new Map();
+  const h = (location.hash || "").replace(/^#/, "");
+  if (!h) return out;
+  for (const part of h.split("&")) {
+    if (!part) continue;
+    const eq = part.indexOf("=");
+    if (eq === -1) {
+      out.set(decodeURIComponent(part), true);
+    } else {
+      out.set(decodeURIComponent(part.slice(0, eq)), decodeURIComponent(part.slice(eq + 1)));
+    }
+  }
+  return out;
+}
+
+function applyHashState() {
+  const m = parseHashState();
+  if (m.size === 0) return;
+
+  // Edit mode — same effect as clicking the Edit Mode toggle.
+  if (m.has("edit") && !editMode) {
+    $("btnEditMode").click();
+  }
+
+  // Search — fill input + apply filter.
+  if (m.has("search")) {
+    const v = m.get("search");
+    const s = (typeof v === "string") ? v : "";
+    const input = $("searchInput");
+    input.value = s;
+    searchTerm = s;
+    applySearchFilter();
+  }
+
+  // Help overlay.
+  if (m.has("help")) {
+    $("helpOverlay").classList.add("open");
+  }
+
+  // Git panel (only meaningful over http://). `git=history` opens history view.
+  if (m.has("git") && typeof GIT_ENABLED !== "undefined" && GIT_ENABLED) {
+    const v = m.get("git");
+    if (!gitPanelOpen()) openGitPanel();
+    if (v === "history") {
+      // Switch to history view after status load fires.
+      setTimeout(() => { try { showHistoryView(); } catch (_) {} }, 250);
+    }
+  }
+
+  // Node selection — open side panel for the given id.
+  if (m.has("node")) {
+    const id = m.get("node");
+    if (typeof id === "string" && id && getNode(id)) {
+      selectNode(id);
+    }
+  }
+}
+
+window.addEventListener("hashchange", () => { applyHashState(); });
+
+(async () => {
+  const ok = await tryAutoLoad();
+  if (ok) {
+    // Fit on first load
+    requestAnimationFrame(() => { fitToContent(); applyHashState(); });
+  } else {
+    applyTransform();
+    applyHashState();
+  }
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# research_tree — launch a project research-tree editor (serve.py + browser)
+#
+# Usage:
+#   research_tree -duct          # start (or reuse) duct tree server, open browser
+#   research_tree -duct --stop   # stop the duct tree server
+#   research_tree --list         # list known trees
+#   research_tree -h | --help    # this help
+
+set -u
+
+# Registry: <flag>  <path>  <port>
+read -r -d '' TREES <<'EOF' || true
+-duct  /home/adam/ŻYCIE/PRACA/Shroud_Comparison/research_tree  8123
+EOF
+
+lookup() {
+  local key="$1"
+  while read -r flag path port; do
+    [ -z "$flag" ] && continue
+    if [ "$flag" = "$key" ]; then echo "$path"$'\t'"$port"; return 0; fi
+  done <<<"$TREES"
+  return 1
+}
+
+list() {
+  printf "%-10s %-8s %s\n" "FLAG" "PORT" "PATH"
+  while read -r flag path port; do
+    [ -z "$flag" ] && continue
+    printf "%-10s %-8s %s\n" "$flag" "$port" "$path"
+  done <<<"$TREES"
+}
+
+usage() {
+  cat <<'EOF'
+Usage: research_tree -<tree> [--stop]
+       research_tree --list
+       research_tree -h | --help
+
+Starts (or reuses) the local research_tree server for the chosen tree
+and opens it in the browser. The server stays running until --stop or
+the machine reboots.
+EOF
+  echo
+  list
+}
+
+[ $# -lt 1 ] && { usage; exit 1; }
+case "$1" in
+  -h|--help) usage; exit 0 ;;
+  --list)    list; exit 0 ;;
+esac
+
+TREE="$1"; shift || true
+ENTRY=$(lookup "$TREE") || { echo "research_tree: unknown tree: $TREE" >&2; echo >&2; list >&2; exit 1; }
+DIR="${ENTRY%$'\t'*}"
+PORT="${ENTRY#*$'\t'}"
+URL="http://127.0.0.1:$PORT/"
+SLUG="${TREE#-}"
+PIDFILE="/tmp/research_tree-${SLUG}.pid"
+LOGFILE="/tmp/research_tree-${SLUG}.log"
+
+is_running() {
+  curl -sf -o /dev/null --max-time 1 "${URL}api/git/status" 2>/dev/null
+}
+
+if [ "${1:-}" = "--stop" ]; then
+  if [ -f "$PIDFILE" ] && PID=$(cat "$PIDFILE" 2>/dev/null) && kill -0 "$PID" 2>/dev/null; then
+    kill "$PID" && echo "research_tree[$SLUG]: stopped (pid $PID)"
+    rm -f "$PIDFILE"
+  else
+    # Fallback: kill by port-bound python process from this user
+    PID=$(ss -ltnp 2>/dev/null | awk -v p=":$PORT" '$4 ~ p {print $0}' | grep -oP 'pid=\K[0-9]+' | head -1 || true)
+    if [ -n "${PID:-}" ]; then
+      kill "$PID" && echo "research_tree[$SLUG]: stopped (pid $PID, found by port)"
+    else
+      echo "research_tree[$SLUG]: nothing to stop"
+    fi
+    rm -f "$PIDFILE"
+  fi
+  exit 0
+fi
+
+JUST_STARTED=0
+if is_running; then
+  echo "research_tree[$SLUG]: already up at $URL"
+else
+  [ -x "$DIR/serve.py" ] || [ -f "$DIR/serve.py" ] || { echo "research_tree[$SLUG]: serve.py not found in $DIR" >&2; exit 1; }
+  echo "research_tree[$SLUG]: starting in $DIR (port $PORT)"
+  ( cd "$DIR" && nohup python3 serve.py --port "$PORT" >"$LOGFILE" 2>&1 & echo $! >"$PIDFILE" )
+  for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+    sleep 0.2
+    is_running && break
+  done
+  if is_running; then
+    echo "research_tree[$SLUG]: up (pid $(cat "$PIDFILE")) — log: $LOGFILE"
+    JUST_STARTED=1
+  else
+    echo "research_tree[$SLUG]: failed to come up in 3s — see $LOGFILE" >&2
+    exit 1
+  fi
+fi
+
+# Open the browser only when we just started the server. If it was already up,
+# the user probably has the tab open; rerunning the command shouldn't pop a new
+# window. To force-open, run `xdg-open $URL` directly.
+if [ "$JUST_STARTED" = "1" ]; then
+  if command -v xdg-open >/dev/null; then
+    xdg-open "$URL" >/dev/null 2>&1 &
+  elif command -v gnome-open >/dev/null; then
+    gnome-open "$URL" >/dev/null 2>&1 &
+  fi
+fi
+echo "$URL"
