@@ -47,7 +47,7 @@ Rules: kebab-case unique IDs, parents reference IDs only (no orphans), all geome
 
 ## How to use
 
-- **Just launch it**: `research_tree -duct` — starts (or reuses) the server and opens the browser. `research_tree -duct --stop` to stop. `research_tree --list` shows registered trees. The launcher lives next to this file (`./research_tree`) and is symlinked into `~/bin/`. To register a new tree, add a row to its `TREES` heredoc.
+- **Just launch it**: `research_tree` (no flag) or `research_tree -duct` — both resolve to this folder; starts (or reuses) the server and opens the browser. `research_tree --stop` to stop, `research_tree --list` to see registered trees. The launcher lives next to this file (`./research_tree`) and is symlinked into `~/bin/`. It auto-discovers its own folder as `-self`; additional trees come from `~/.config/research_tree/trees.conf` (one row per line: `<flag>  <absolute-path>  <port>`). The `-duct` flag on this machine is defined there.
 - **Read/view only**: open `index.html` directly in a browser (file://). Editor loads `data.json` via fetch — works in Chrome/Edge; on Firefox the fetch may be blocked and the empty-state "Open data.json" button kicks in. Git buttons are disabled on file://.
 - **Manually serve**: `python3 serve.py` (defaults to port 8123). `--port N` and `--repo PATH` flags supported.
 - **Pure file:// editing**: still works — Save uses the File System Access API to write `data.json`. After saving, commit manually via the terminal.

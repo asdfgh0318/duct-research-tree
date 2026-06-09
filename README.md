@@ -20,6 +20,15 @@ python3 serve.py
 
 Then open <http://127.0.0.1:8123/> in your browser. That's it.
 
+Prefer one command? Use the bundled launcher:
+
+```bash
+./research_tree              # starts the server and opens the browser
+./research_tree --stop       # stops it
+```
+
+It auto-discovers the folder it lives in, so you don't have to configure anything.
+
 Click any node to open its side panel. Edit fields → click **Save** in the toolbar to write back to `data.json`. When you're happy with a batch of edits, hit **Git ▾ → Commit…** and write a one-line message — that becomes a real git commit.
 
 ---
@@ -55,7 +64,7 @@ A 19-page illustrated PDF lives at [`manual/manual.pdf`](manual/manual.pdf). It 
 | `index.html` | The editor. Single file, vanilla JS, no build step. |
 | `data.json` | Your tree. Source of truth. Commit it for history. |
 | `serve.py` | Tiny Python server. Stdlib only. Adds `/api/git/{status,pull,commit,push,log}` for the in-page Git buttons. |
-| `research_tree` | Bash launcher (`research_tree -duct`). **Note**: the registry inside it uses an absolute path — edit it for your own clone, or just run `python3 serve.py` directly. |
+| `research_tree` | Bash launcher. From inside the folder: `./research_tree` (or symlink it to `~/bin/` and call `research_tree` from anywhere). It auto-discovers the folder it lives in — no path editing needed. Register more trees in `~/.config/research_tree/trees.conf`. |
 | `manual/` | Illustrated PDF manual + source + rebuild scripts. |
 | `CLAUDE.md` | Notes for the next person (or AI) hacking on this. |
 
@@ -99,7 +108,7 @@ The editor will auto-pick column = `1 + max(depth(parents))`, so you don't posit
 - **Git buttons are disabled.** You opened `index.html` via `file://`. Start `python3 serve.py` and use the `http://127.0.0.1:8123/` URL instead.
 - **Save downloaded a file instead of writing in place.** Firefox doesn't support the File System Access API. Use `serve.py` (and the in-page Save will write through), or switch to a Chromium-family browser.
 - **Pull failed: not a fast-forward.** Server refuses to auto-resolve merge conflicts. Resolve from the terminal: `git pull`, fix, commit, then **Push** from the editor.
-- **`research_tree -duct` doesn't work.** The launcher has an absolute path for the project author's machine. Either edit the `TREES` registry inside the script, or just `cd` into the folder and run `python3 serve.py`.
+- **Want a global launcher?** Symlink the script into your `PATH`: `ln -s "$(pwd)/research_tree" ~/bin/research_tree`. Then `research_tree` (no flag) works from anywhere. For multiple trees on one machine, register them in `~/.config/research_tree/trees.conf` — one line each: `<flag>  <absolute-path>  <port>`.
 
 ---
 
