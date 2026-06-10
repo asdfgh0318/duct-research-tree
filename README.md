@@ -13,12 +13,14 @@ Each node is a test, build, synthesis, or decision. Nodes carry geometry (gap, h
 You need: a recent **Python 3**, **git**, and a Chromium-family browser (Chrome / Edge / Brave). On Linux/macOS:
 
 ```bash
-git clone https://github.com/asdfgh0318/zycie.git
-cd zycie/PRACA/Shroud_Comparison/research_tree
+git clone https://github.com/asdfgh0318/duct-research-tree.git
+cd duct-research-tree
 python3 serve.py
 ```
 
 Then open <http://127.0.0.1:8123/> in your browser. That's it.
+
+**On a Mac, non-technical?** Paste one line into Terminal and you're done — see [`SETUP_MAC.md`](SETUP_MAC.md). It installs everything and puts a double-clickable **Research Tree** icon on the Desktop.
 
 Prefer one command? Use the bundled launcher:
 

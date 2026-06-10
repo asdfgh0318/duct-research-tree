@@ -52,6 +52,23 @@ Rules: kebab-case unique IDs, parents reference IDs only (no orphans), all geome
 - **Manually serve**: `python3 serve.py` (defaults to port 8123). `--port N` and `--repo PATH` flags supported.
 - **Pure file:// editing**: still works — Save uses the File System Access API to write `data.json`. After saving, commit manually via the terminal.
 
+## Shared repo (Mac collaborator)
+
+The folder is mirrored to a small **public** repo so a collaborator without a
+GitHub account can run and pull it: `https://github.com/asdfgh0318/duct-research-tree`
+(remote `shared` in the ŻYCIE repo). It was created with `git subtree split`,
+so the folder's history carried over.
+
+- **Publish local changes to the shared repo** (after committing in ŻYCIE):
+  `git -C /home/adam/ŻYCIE subtree push --prefix='PRACA/Shroud_Comparison/research_tree' shared main`
+- The collaborator installs via `setup_mac.command` (one curl line, see
+  `SETUP_MAC.md`), gets Desktop launchers, and **Pull**s updates from the
+  editor. He has no account, so **Push doesn't work for him** — he sends
+  `data.json` back by hand and his edits get merged here.
+- Mac specifics live in: `Research Tree.command`, `Stop Research Tree.command`,
+  `setup_mac.command`, `SETUP_MAC.md`. The `research_tree` launcher handles
+  Darwin (`open`, `lsof` fallback).
+
 ## Git conventions
 
 - One commit per meaningful tree change. Suggested message: `tree: <what changed>` (e.g. `tree: fill ag1×h50 acoustic results`).

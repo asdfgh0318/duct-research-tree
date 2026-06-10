@@ -112,7 +112,11 @@ if [ "$STOP" = "1" ]; then
     kill "$PID" && echo "research_tree[$SLUG]: stopped (pid $PID)"
     rm -f "$PIDFILE"
   else
-    PID=$(ss -ltnp 2>/dev/null | awk -v p=":$PORT" '$4 ~ p {print $0}' | grep -oP 'pid=\K[0-9]+' | head -1 || true)
+    if command -v ss >/dev/null; then
+      PID=$(ss -ltnp 2>/dev/null | awk -v p=":$PORT" '$4 ~ p {print $0}' | grep -oP 'pid=\K[0-9]+' | head -1 || true)
+    else
+      PID=$(lsof -ti "tcp:$PORT" -sTCP:LISTEN 2>/dev/null | head -1 || true)
+    fi
     if [ -n "${PID:-}" ]; then
       kill "$PID" && echo "research_tree[$SLUG]: stopped (pid $PID, found by port)"
     else
@@ -145,7 +149,9 @@ fi
 
 # Open the browser only on first start. Re-runs just confirm it's up.
 if [ "$JUST_STARTED" = "1" ]; then
-  if command -v xdg-open >/dev/null; then
+  if [ "$(uname)" = "Darwin" ] && command -v open >/dev/null; then
+    open "$URL" >/dev/null 2>&1 &
+  elif command -v xdg-open >/dev/null; then
     xdg-open "$URL" >/dev/null 2>&1 &
   elif command -v gnome-open >/dev/null; then
     gnome-open "$URL" >/dev/null 2>&1 &
