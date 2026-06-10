@@ -709,6 +709,222 @@
     stroke-dasharray: 4 4;
   }
 
+  /* ===== Report overlay (one-page PDF) ===== */
+  #reportOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 300;
+    display: none;
+    overflow: auto;
+    padding: 18px 0 48px;
+  }
+  #reportOverlay.open { display: block; }
+  #reportOverlay .report-toolbar {
+    width: 297mm;
+    margin: 0 auto 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .report-page {
+    width: 297mm;
+    height: 209mm;
+    margin: 0 auto;
+    background: #fff;
+    color: #1c2430;
+    padding: 8mm 9mm 7mm;
+    box-shadow: 0 10px 44px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+  .report-page .rep-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 8mm;
+    padding-bottom: 3mm;
+    border-bottom: 2px solid #1c2430;
+    margin-bottom: 3mm;
+  }
+  .report-page .rep-title { flex: 1; }
+  .report-page .rep-title h1 {
+    margin: 0 0 2px 0;
+    font-size: 19px;
+    line-height: 1.2;
+    color: #10161f;
+  }
+  .report-page .rep-title .sub {
+    color: #5b6471;
+    font-size: 11px;
+  }
+  .report-page .rep-lock {
+    text-align: right;
+    font-size: 10px;
+    color: #3a4252;
+    white-space: nowrap;
+  }
+  .report-page .rep-lock .mono {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .report-page .rep-lock .warn { color: #b35a00; font-weight: 600; }
+  .report-page .rep-stats {
+    display: flex;
+    gap: 4mm;
+    align-items: center;
+    margin-bottom: 3mm;
+  }
+  .report-page .rep-stat {
+    border: 1px solid #c9d0da;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 10px;
+    color: #3a4252;
+  }
+  .report-page .rep-stat b { font-size: 14px; margin-right: 4px; color: #10161f; }
+  .report-page .rep-stat .dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    margin-right: 5px; vertical-align: middle;
+  }
+  .report-page .rep-progressbar {
+    flex: 1;
+    height: 9px;
+    background: #e7ebf0;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .report-page .rep-progressbar .fill {
+    height: 100%;
+    background: #2e9e4f;
+  }
+  .report-page .rep-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 5mm;
+  }
+  .report-page .rep-side {
+    width: 64mm;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3mm;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .report-page .rep-section h2 {
+    margin: 0 0 4px 0;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #5b6471;
+    border-bottom: 1px solid #c9d0da;
+    padding-bottom: 2px;
+  }
+  .report-page .rep-section ul {
+    margin: 0; padding: 0; list-style: none;
+  }
+  .report-page .rep-section li {
+    padding: 1.5px 0;
+    font-size: 10px;
+    color: #1c2430;
+    display: flex;
+    gap: 5px;
+    align-items: baseline;
+  }
+  .report-page .rep-section li .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    flex-shrink: 0; align-self: center;
+  }
+  .report-page .rep-section li .meta {
+    color: #8b95a3;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 9px;
+    flex-shrink: 0;
+  }
+  .report-page .rep-section .empty {
+    color: #8b95a3; font-style: italic; font-size: 10px;
+  }
+  .report-page .rep-treewrap {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid #c9d0da;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    background: #fbfcfd;
+  }
+  .report-page .rep-tree {
+    position: absolute;
+    top: 0; left: 0;
+    transform-origin: 0 0;
+  }
+  .report-page .rep-tree svg { position: absolute; top: 0; left: 0; overflow: visible; }
+  .report-page .rep-tree svg path {
+    fill: none; stroke: #aeb8c4; stroke-width: 1.2;
+  }
+  .report-page .rep-colhead {
+    position: absolute;
+    font-size: 8.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #5b6471;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .report-page .rn {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #c2cad4;
+    border-left-width: 3px;
+    border-radius: 3px;
+    padding: 3px 5px 2px;
+    overflow: hidden;
+  }
+  .report-page .rn .t {
+    font-size: 8.5px;
+    font-weight: 600;
+    line-height: 1.15;
+    color: #10161f;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .report-page .rn .s {
+    font-size: 7px;
+    color: #5b6471;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .report-page .rn .s .dot {
+    display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+    margin-right: 3px; vertical-align: middle;
+  }
+  .report-page .rep-foot {
+    margin-top: 2.5mm;
+    padding-top: 2mm;
+    border-top: 1px solid #c9d0da;
+    font-size: 9px;
+    color: #8b95a3;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  @media print {
+    @page { size: A4 landscape; margin: 0; }
+    html, body { overflow: visible !important; height: auto !important; background: #fff !important; }
+    body.report-open > *:not(#reportOverlay) { display: none !important; }
+    #reportOverlay { position: static; background: none; padding: 0; overflow: visible; }
+    #reportOverlay .report-toolbar { display: none; }
+    .report-page { box-shadow: none; margin: 0; }
+  }
+
   /* scrollbar */
   #side::-webkit-scrollbar, #helpOverlay .box::-webkit-scrollbar { width: 10px; }
   #side::-webkit-scrollbar-thumb,
@@ -737,6 +953,7 @@
     <button id="btnGit" title="Git actions">Git ▾</button>
     <div id="gitPanel" role="dialog" aria-label="Git actions"></div>
   </div>
+  <button id="btnReport" title="One-page PDF status report">Report</button>
   <button id="btnSave" class="primary" title="Save (Ctrl/Cmd+S)">Save</button>
   <button id="btnHelp" title="Help">?</button>
 </div>
@@ -848,6 +1065,14 @@
 <div id="toast"></div>
 <div id="ctxMenu"></div>
 <svg id="linkDragLine"><path d=""></path></svg>
+
+<div id="reportOverlay">
+  <div class="report-toolbar">
+    <button id="reportPrint" class="primary">Save as PDF / Print</button>
+    <button id="reportClose">Close</button>
+  </div>
+  <div class="report-page" id="reportPage"></div>
+</div>
 
 <div id="helpOverlay">
   <div class="box">
@@ -2354,6 +2579,251 @@ async function showHistoryView() {
   }, true);
 })();
 
+/* ====================== Report (one-page PDF) ====================== */
+const REPORT_STATUS = {
+  "done":        { label: "done",        color: "#2e9e4f" },
+  "in-progress": { label: "in progress", color: "#2c63a8" },
+  "blocked":     { label: "blocked",     color: "#c83737" },
+  "planned":     { label: "planned",     color: "#9aa4b0" },
+};
+
+function reportStatusDot(status) {
+  const c = (REPORT_STATUS[status] || REPORT_STATUS.planned).color;
+  return `<span class="dot" style="background:${c}"></span>`;
+}
+
+async function openReport() {
+  const page = $("reportPage");
+  page.innerHTML = `<div style="margin:auto;color:#8b95a3">Building report…</div>`;
+  $("reportOverlay").classList.add("open");
+  document.body.classList.add("report-open");
+
+  // --- gather data ---
+  const counts = { planned: 0, "in-progress": 0, done: 0, blocked: 0 };
+  for (const n of state.nodes) counts[n.status] = (counts[n.status] || 0) + 1;
+  const total = state.nodes.length;
+  const pct = total ? Math.round(100 * counts.done / total) : 0;
+
+  let gitStatus = null, logEntries = [];
+  if (GIT_ENABLED) {
+    const s = await gitApi("GET", "/api/git/status");
+    if (s.ok) gitStatus = s.data;
+    const rel = (gitStatus && gitStatus.data_json_rel) || "data.json";
+    const lg = await gitApi("GET", "/api/git/log?path=" + encodeURIComponent(rel) + "&limit=9");
+    if (lg.ok && lg.data) logEntries = lg.data.entries || [];
+  }
+
+  const now = new Date();
+  const stamp = now.toISOString().slice(0, 10) + " " + now.toTimeString().slice(0, 5);
+
+  // --- header / lock box ---
+  let lockHtml;
+  if (gitStatus) {
+    const dirtyData = dirty || (gitStatus.dirty_files || []).some(f => f.endsWith("data.json"));
+    lockHtml = `
+      <div>Generated <b>${escapeHtml(stamp)}</b></div>
+      <div>State locked at <span class="mono">${escapeHtml(gitStatus.head || "?")}</span> on <span class="mono">${escapeHtml(gitStatus.branch || "?")}</span></div>
+      <div style="max-width:75mm;overflow:hidden;text-overflow:ellipsis">${escapeHtml(gitStatus.head_msg || "")}</div>
+      ${dirtyData ? `<div class="warn">⚠ includes uncommitted edits</div>` : `<div style="color:#2e9e4f">✓ matches committed state</div>`}`;
+  } else {
+    lockHtml = `<div>Generated <b>${escapeHtml(stamp)}</b></div><div>(git info unavailable — opened without server)</div>`;
+  }
+
+  // --- stats strip ---
+  const statHtml = ["done", "in-progress", "blocked", "planned"].map(st =>
+    `<div class="rep-stat">${reportStatusDot(st)}<b>${counts[st]}</b>${escapeHtml(REPORT_STATUS[st].label)}</div>`
+  ).join("") +
+  `<div class="rep-stat"><b>${total}</b>total</div>
+   <div class="rep-progressbar"><div class="fill" style="width:${pct}%"></div></div>
+   <div class="rep-stat" style="border:none;padding-right:0"><b>${pct}%</b>complete</div>`;
+
+  // --- side lists ---
+  const liNode = (n) => {
+    const ph = getPhase(n.phaseId);
+    const geom = formatGeom(n.geometry);
+    return `<li>${reportStatusDot(n.status)}<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeAttr(n.title)}">${escapeHtml(n.title)}</span>${geom ? `<span class="meta">${escapeHtml(geom)}</span>` : ""}</li>`;
+  };
+  const capped = (arr, cap) => {
+    const items = arr.slice(0, cap).map(liNode).join("");
+    const more = arr.length > cap ? `<li class="empty">… +${arr.length - cap} more</li>` : "";
+    return items + more;
+  };
+  const doneNodes = state.nodes.filter(n => n.status === "done");
+  const progNodes = state.nodes.filter(n => n.status === "in-progress");
+  const blockedNodes = state.nodes.filter(n => n.status === "blocked");
+
+  const logHtml = logEntries.length
+    ? `<ul>` + logEntries.map(e => {
+        const d = (e.date || "").slice(0, 10);
+        return `<li><span class="meta">${escapeHtml(d)}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeAttr(e.subject)}">${escapeHtml(e.subject)}</span></li>`;
+      }).join("") + `</ul>`
+    : `<div class="empty">${GIT_ENABLED ? "no commits recorded yet" : "needs the local server for git history"}</div>`;
+
+  const sideHtml = `
+    <div class="rep-section">
+      <h2>Accomplishments (${doneNodes.length})</h2>
+      ${doneNodes.length ? `<ul>${capped(doneNodes, 11)}</ul>` : `<div class="empty">none completed yet</div>`}
+    </div>
+    <div class="rep-section">
+      <h2>In progress (${progNodes.length})</h2>
+      ${progNodes.length ? `<ul>${capped(progNodes, 6)}</ul>` : `<div class="empty">nothing in progress</div>`}
+    </div>
+    ${blockedNodes.length ? `
+    <div class="rep-section">
+      <h2>Blocked (${blockedNodes.length})</h2>
+      <ul>${capped(blockedNodes, 4)}</ul>
+    </div>` : ""}
+    <div class="rep-section" style="min-height:0;overflow:hidden">
+      <h2>Recent progress (changelog)</h2>
+      ${logHtml}
+    </div>`;
+
+  // --- mini tree, wrapped into horizontal bands so a deep DAG fills the page ---
+  const lay = layout();
+  const MW = 170, MH = 46, MCG = 40, MRG = 12, MHEAD = 22, BAND_GAP = 26;
+  const COLW = MW + MCG, ROWP = MH + MRG;
+  const nCols = lay.maxDepth + 1;
+  const rowsOfCol = (d) => (lay.columns.get(d) || []).length;
+
+  // Pick the band count that maximizes the fit scale in the (fixed, mm-defined)
+  // tree box. Box dims are estimated; the exact fit happens after render anyway.
+  const estW = 790, estH = 575;
+  let bands = 1, bestScale = 0;
+  for (let k = 1; k <= 4 && k <= nCols; k++) {
+    const per = Math.ceil(nCols / k);
+    const w = per * COLW - MCG;
+    let h = 0;
+    for (let b = 0; b < k; b++) {
+      let rows = 0;
+      for (let d = b * per; d < Math.min((b + 1) * per, nCols); d++) rows = Math.max(rows, rowsOfCol(d));
+      h += MHEAD + Math.max(rows, 1) * ROWP - MRG + (b ? BAND_GAP : 0);
+    }
+    const s = Math.min(estW / w, estH / h);
+    if (s > bestScale) { bestScale = s; bands = k; }
+  }
+  const per = Math.ceil(nCols / bands);
+  const bandTop = [];
+  {
+    let y = 0;
+    for (let b = 0; b < bands; b++) {
+      bandTop.push(y);
+      let rows = 0;
+      for (let d = b * per; d < Math.min((b + 1) * per, nCols); d++) rows = Math.max(rows, rowsOfCol(d));
+      y += MHEAD + Math.max(rows, 1) * ROWP - MRG + BAND_GAP;
+    }
+  }
+  const colXY = (depth, row) => {
+    const b = Math.floor(depth / per);
+    return {
+      x: (depth - b * per) * COLW,
+      y: bandTop[b] + MHEAD + row * ROWP,
+      band: b
+    };
+  };
+
+  const mini = { w: 0, h: 0, nodes: "", paths: "", heads: "" };
+  const mpos = new Map();
+  for (const [id, pos] of lay.positions) {
+    const p = colXY(pos.depth, pos.row);
+    mpos.set(id, p);
+    mini.w = Math.max(mini.w, p.x + MW);
+    mini.h = Math.max(mini.h, p.y + MH);
+  }
+  const sortedDepths = Array.from(lay.columns.keys()).sort((a, b) => a - b);
+  for (const d of sortedDepths) {
+    const arr = lay.columns.get(d);
+    if (!arr.length) continue;
+    const cnt = {};
+    for (const n of arr) cnt[n.phaseId] = (cnt[n.phaseId] || 0) + 1;
+    let top = arr[0].phaseId, c = 0;
+    for (const k of Object.keys(cnt)) if (cnt[k] > c) { top = k; c = cnt[k]; }
+    const ph = getPhase(top);
+    const hp = colXY(d, 0);
+    mini.heads += `<div class="rep-colhead" style="left:${hp.x}px;top:${hp.y - MHEAD}px;width:${MW}px;color:${ph.color}">${escapeHtml(ph.title)}</div>`;
+  }
+  // Dashed separators between bands.
+  for (let b = 1; b < bands; b++) {
+    const y = bandTop[b] - BAND_GAP / 2;
+    mini.paths += `<path d="M0,${y} L${per * COLW - MCG},${y}" style="stroke-dasharray:3 5;stroke:#d4dae2"></path>`;
+  }
+  for (const n of state.nodes) {
+    const p = mpos.get(n.id);
+    if (!p) continue;
+    const ph = getPhase(n.phaseId);
+    const st = REPORT_STATUS[n.status] || REPORT_STATUS.planned;
+    const geom = formatGeom(n.geometry);
+    mini.nodes += `
+      <div class="rn" style="left:${p.x}px;top:${p.y}px;width:${MW}px;height:${MH}px;border-left-color:${ph.color}">
+        <div class="t">${escapeHtml(n.title)}</div>
+        <div class="s"><span class="dot" style="background:${st.color}"></span>${escapeHtml(st.label)}${geom ? " · " + escapeHtml(geom) : ""}</div>
+      </div>`;
+    for (const pid of n.parents) {
+      const pp = mpos.get(pid);
+      if (!pp) continue;
+      if (pp.band === p.band) {
+        const x1 = pp.x + MW, y1 = pp.y + MH / 2;
+        const x2 = p.x, y2 = p.y + MH / 2;
+        const dx = Math.max(14, (x2 - x1) * 0.5);
+        mini.paths += `<path d="M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}"></path>`;
+      } else {
+        // Link continues across a band break — dashed exit/entry stubs.
+        const x1 = pp.x + MW, y1 = pp.y + MH / 2;
+        const x2 = p.x, y2 = p.y + MH / 2;
+        mini.paths += `<path d="M${x1},${y1} L${x1 + 13},${y1}" style="stroke-dasharray:2 3"></path>` +
+                      `<path d="M${x2 - 13},${y2} L${x2},${y2}" style="stroke-dasharray:2 3"></path>`;
+      }
+    }
+  }
+
+  page.innerHTML = `
+    <div class="rep-head">
+      <div class="rep-title">
+        <h1>${escapeHtml(state.title || "Research Tree")} — Status Report</h1>
+        <div class="sub">One-page snapshot of progress, accomplishments and the full research tree.</div>
+      </div>
+      <div class="rep-lock">${lockHtml}</div>
+    </div>
+    <div class="rep-stats">${statHtml}</div>
+    <div class="rep-body">
+      <div class="rep-side">${sideHtml}</div>
+      <div class="rep-treewrap">
+        <div class="rep-tree" id="repTree" style="width:${mini.w}px;height:${mini.h}px">
+          <svg width="${mini.w}" height="${mini.h}">${mini.paths}</svg>
+          ${mini.heads}
+          ${mini.nodes}
+        </div>
+      </div>
+    </div>
+    <div class="rep-foot">
+      <span>${escapeHtml(state.title || "Research Tree")}</span>
+      <span>${gitStatus ? "commit " + escapeHtml(gitStatus.head || "") + " · " : ""}${escapeHtml(stamp)}</span>
+    </div>`;
+
+  // Scale the mini tree to fit its box (after layout pass).
+  requestAnimationFrame(() => {
+    const wrap = page.querySelector(".rep-treewrap");
+    const tree = $("repTree");
+    if (!wrap || !tree) return;
+    const pad = 8;
+    const s = Math.min((wrap.clientWidth - pad * 2) / mini.w, (wrap.clientHeight - pad * 2) / mini.h, 1);
+    const ox = pad + Math.max(0, (wrap.clientWidth - pad * 2 - mini.w * s) / 2);
+    const oy = pad + Math.max(0, (wrap.clientHeight - pad * 2 - mini.h * s) / 2);
+    tree.style.transform = `translate(${ox}px, ${oy}px) scale(${s})`;
+  });
+}
+
+function closeReport() {
+  $("reportOverlay").classList.remove("open");
+  document.body.classList.remove("report-open");
+}
+
+$("btnReport").addEventListener("click", openReport);
+$("reportClose").addEventListener("click", closeReport);
+$("reportPrint").addEventListener("click", () => window.print());
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && $("reportOverlay").classList.contains("open")) closeReport();
+});
+
 /* ====================== Toolbar wiring ====================== */
 $("btnSave").addEventListener("click", doSave);
 $("btnOpen").addEventListener("click", doOpen);
@@ -2470,6 +2940,11 @@ function applyHashState() {
       // Switch to history view after status load fires.
       setTimeout(() => { try { showHistoryView(); } catch (_) {} }, 250);
     }
+  }
+
+  // Report overlay — one-page printable status report.
+  if (m.has("report")) {
+    openReport();
   }
 
   // Node selection — open side panel for the given id.

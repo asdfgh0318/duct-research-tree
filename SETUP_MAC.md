@@ -25,6 +25,9 @@ needed, nothing to configure.
 - **Get the latest version of the tree**: click the **Pull** button inside
   the editor (top toolbar, git panel). Do this whenever you want to see the
   newest state — that's all there is to it.
+- **Make a PDF report**: click **Report** in the toolbar, then
+  **Save as PDF / Print** — a one-page summary with progress and the whole
+  tree.
 - **Stop it**: double-click **Stop Research Tree** (optional — it uses almost
   no resources while running).
 

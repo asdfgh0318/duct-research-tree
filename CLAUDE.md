@@ -75,6 +75,20 @@ so the folder's history carried over.
 - `data.json` is pretty-printed (`JSON.stringify(state, null, 2)`) so diffs are line-by-line readable.
 - Don't squash these commits — the per-edit history *is* the research log.
 
+## PDF status report
+
+Toolbar **Report** button (or `#report` hash) builds a one-page A4-landscape
+status report in an overlay: state lock (timestamp + HEAD commit + clean/dirty
+flag), status counts + progress bar, accomplishments (done nodes), in-progress
+/ blocked lists, recent `data.json` commits (via `/api/git/log`), and the full
+node tree wrapped into 1–4 horizontal bands (band count auto-picked to
+maximize fit; cross-band links shown as dashed stubs). "Save as PDF / Print"
+just calls `window.print()` — print CSS (`@page size: A4 landscape; margin: 0`)
+guarantees exactly one page. Headless render:
+`chromium --headless --no-pdf-header-footer --print-to-pdf=out.pdf 'http://127.0.0.1:8123/#report' --virtual-time-budget=4000`.
+Git info degrades gracefully on `file://` (report still works, changelog says
+it needs the server).
+
 ## Sound visualizer integration
 
 Each node carries a `soundVisualizerLink` URL. It points into the (separate) sound visualizer project where acoustic + performance numbers live. This tree only carries geometry/build state — the heavy data stays in the visualizer's DB. When that project gets a deeplink scheme, the link field can hold `soundviz://session/abc123`-style URIs.
@@ -95,7 +109,7 @@ Illustrated user manual for newcomers lives in `manual/`:
 - `manual/make_screenshots.sh` — re-captures all 10 screenshots. Boots `serve.py` on port 8124 (so it never clashes with the user's running 8123), drives Chromium with deterministic `#node=`/`#edit`/`#git`/`#help`/`#search=` URL hashes, then stops the server.
 - `manual/build.sh` — runs `make_screenshots.sh` then renders `manual.html` to `manual.pdf` via headless Chromium. This is the one-shot rebuild command.
 
-`index.html` exposes the URL-hash hooks the screenshot script relies on (`#node=<id>`, `#edit`, `#git`, `#git=history`, `#help`, `#search=<text>`, joined with `&`). They re-apply on `hashchange`, so you can navigate the same window between deterministic states without reloading. They're also useful as deep links from external docs.
+`index.html` exposes the URL-hash hooks the screenshot script relies on (`#node=<id>`, `#edit`, `#git`, `#git=history`, `#help`, `#search=<text>`, `#report`, joined with `&`). They re-apply on `hashchange`, so you can navigate the same window between deterministic states without reloading. They're also useful as deep links from external docs.
 
 The Help overlay (`?` button in the toolbar) carries a footer link to `manual/manual.pdf`.
 

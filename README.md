@@ -49,6 +49,8 @@ Click any node to open its side panel. Edit fields → click **Save** in the too
 
 **Git panel.** Status, pull, commit, push, history — all without leaving the page.
 
+**Report.** The toolbar's **Report** button renders a one-page A4 status report — locked to the current git commit, with progress stats, accomplishments, recent changelog, and the whole tree — and saves it to PDF via the browser print dialog.
+
 ![Git panel](manual/screenshots/06-git-panel.png)
 
 ---
