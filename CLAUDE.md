@@ -63,8 +63,8 @@ so the folder's history carried over.
   `git -C /home/adam/ŻYCIE subtree push --prefix='PRACA/Shroud_Comparison/research_tree' shared main`
 - The collaborator installs via `setup_mac.command` (one curl line, see
   `SETUP_MAC.md`), gets Desktop launchers, and **Pull**s updates from the
-  editor. He has no account, so **Push doesn't work for him** — he sends
-  `data.json` back by hand and his edits get merged here.
+  editor. He is a **view/pull-only supervisor** — he has no GitHub account,
+  doesn't push, and isn't expected to edit. All edits happen here.
 - Mac specifics live in: `Research Tree.command`, `Stop Research Tree.command`,
   `setup_mac.command`, `SETUP_MAC.md`. The `research_tree` launcher handles
   Darwin (`open`, `lsof` fallback).

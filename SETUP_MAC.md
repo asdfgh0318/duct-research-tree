@@ -23,25 +23,16 @@ needed, nothing to configure.
   Terminal window appears (you can close it) and the tree opens in your
   browser at `http://127.0.0.1:8123/`.
 - **Get the latest version of the tree**: click the **Pull** button inside
-  the editor (top toolbar, git panel).
-- **Save your edits**: click **Save**. You can also click **Commit** with a
-  short message — this records your change in the local history.
+  the editor (top toolbar, git panel). Do this whenever you want to see the
+  newest state — that's all there is to it.
 - **Stop it**: double-click **Stop Research Tree** (optional — it uses almost
   no resources while running).
 
-## Sending your changes back
-
-The **Push** button will not work on this machine (it needs a GitHub
-account). To share your edits:
-
-1. Click **Save** in the editor.
-2. Send the file `ResearchTree/data.json` (in your home folder) back by
-   AirDrop / email / chat.
-
-Heads-up: clicking **Pull** after you've made local edits may fail with a
-conflict message. If that happens, send your `data.json` back first, then ask
-for a fresh copy (or just delete the `ResearchTree` folder and run the setup
-line again).
+Your copy is for **viewing**. Don't worry about the Save / Commit / Push
+buttons — changes to the tree are made on the other end, and **Pull** brings
+them to you. If you accidentally changed something and **Pull** starts
+complaining, just delete the `ResearchTree` folder from your home folder and
+run the setup line again — you'll get a fresh copy.
 
 ## If something looks stuck
 
