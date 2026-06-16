@@ -205,6 +205,57 @@ def _safe_repo_path(repo, raw):
 
 
 # ---------------------------------------------------------------------------
+# Node patch (loopback-only writer, used by sound-visualizer-style integrations)
+# ---------------------------------------------------------------------------
+
+_NODE_WRITABLE_FIELDS = {"soundVisualizerLink", "status", "notes"}
+_NODE_VALID_STATUSES = {"planned", "in-progress", "done", "blocked"}
+
+
+def _patch_node(serve_dir, repo_root, node_id, body):
+    """Update a node's writable fields in data.json + auto-commit.
+
+    Only `soundVisualizerLink`, `status`, `notes` are settable here — schema
+    surgery (id/parents/geometry/etc.) belongs in the browser editor where
+    the user can see the layout impact. Returns (http_status, json_payload).
+    """
+    if not isinstance(body, dict):
+        return 400, {"ok": False, "error": "body must be a JSON object"}
+    bad = [k for k in body if k not in _NODE_WRITABLE_FIELDS]
+    if bad:
+        return 400, {"ok": False, "error": f"unsupported fields: {sorted(bad)}"}
+    if "status" in body and body["status"] not in _NODE_VALID_STATUSES:
+        return 400, {"ok": False, "error": f"status must be one of {sorted(_NODE_VALID_STATUSES)}"}
+    for k in ("soundVisualizerLink", "notes"):
+        if k in body and not isinstance(body[k], str):
+            return 400, {"ok": False, "error": f"{k} must be a string"}
+
+    data_path = os.path.join(serve_dir, "data.json")
+    if not os.path.exists(data_path):
+        return 500, {"ok": False, "error": "data.json not found"}
+    with open(data_path, encoding="utf-8") as f:
+        data = json.load(f)
+    nodes = data.get("nodes") or []
+    target = next((n for n in nodes if n.get("id") == node_id), None)
+    if target is None:
+        return 404, {"ok": False, "error": f"no node with id {node_id!r}"}
+
+    changed = {k: v for k, v in body.items() if target.get(k) != v}
+    if not changed:
+        return 200, {"ok": True, "node_id": node_id, "changed": {}}
+    target.update(changed)
+
+    with open(data_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+    rel = os.path.relpath(data_path, repo_root)
+    msg = f"tree: link sound-vis data for {node_id}"
+    commit_result = git_commit(repo_root, msg, [rel])
+    return 200, {"ok": True, "node_id": node_id, "changed": changed, "git": commit_result}
+
+
+# ---------------------------------------------------------------------------
 # HTTP handler
 # ---------------------------------------------------------------------------
 
@@ -326,6 +377,22 @@ class GitAwareHandler(SimpleHTTPRequestHandler):
         if path == "/api/git/push":
             self._send_json(200, git_push(self.repo_root))
             return
+        # Node-write endpoint (loopback-only): patches a node's editable fields.
+        # Designed for external tools (e.g. sound-visualizer) to push the
+        # `soundVisualizerLink` + status flip after a successful capture.
+        # Refuses any non-loopback caller so the LAN can read the tree but not edit it.
+        if path.startswith("/api/node/"):
+            client_ip = self.client_address[0]
+            if client_ip not in ("127.0.0.1", "::1", "::ffff:127.0.0.1"):
+                self._send_json(403, {"ok": False, "error": "node-write is loopback-only"})
+                return
+            node_id = path[len("/api/node/"):]
+            if not node_id or "/" in node_id:
+                self._send_json(400, {"ok": False, "error": "node id required"})
+                return
+            self._send_json(*_patch_node(self.serve_dir, self.repo_root, node_id, body))
+            return
+
         if path == "/api/git/commit":
             message = body.get("message")
             paths = body.get("paths")
@@ -378,6 +445,12 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Local research-tree editor server with git API.")
     parser.add_argument("--port", type=int, default=8123, help="TCP port (default 8123)")
     parser.add_argument("--repo", default=None, help="Git repo root (default: auto-detect)")
+    parser.add_argument(
+        "--bind",
+        default="127.0.0.1",
+        help="Bind address. Default 127.0.0.1 (local only). Use 0.0.0.0 to expose on LAN. "
+             "The /api/node/<id> write endpoint is loopback-only regardless of --bind.",
+    )
     args = parser.parse_args(argv)
 
     serve_dir = here
@@ -391,7 +464,7 @@ def main(argv=None):
     # SimpleHTTPRequestHandler serves files from cwd; chdir for reliability.
     os.chdir(serve_dir)
 
-    bind = "127.0.0.1"
+    bind = args.bind
     httpd = ThreadingHTTPServer((bind, args.port), GitAwareHandler)
     print(f"serving {serve_dir}  ·  repo {repo_root}  ·  http://{bind}:{args.port}/")
     sys.stdout.flush()
