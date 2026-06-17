@@ -2203,6 +2203,29 @@ async function doSave() {
   const json = JSON.stringify(state, null, 2);
   // Strip transient fields like _order before save? We want layout persistence to survive, so keep _order.
   // (Spec doesn't forbid extra props; sanitize() preserves graceful loading.)
+
+  // Served over http(s) (e.g. serve.py on the Pi): persist to the SERVER so the
+  // canonical data.json updates and other tools (sound-visualizer) see the edit.
+  // The File System Access API would otherwise write to the operator's local
+  // machine, not the server. Falls through to the FS path on failure.
+  if (location.protocol === "http:" || location.protocol === "https:") {
+    try {
+      const res = await fetch("/api/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: json,
+      });
+      const r = await res.json().catch(() => ({}));
+      if (!res.ok || !r.ok) throw new Error(r.error || res.statusText);
+      dirty = false; flashSaved();
+      showToast(`Saved to server (${r.nodes} nodes). Commit via Git ▾ for history.`, "success");
+      return;
+    } catch (err) {
+      showToast("Server save failed: " + (err.message || err) + " — trying local file", "error");
+      // fall through to File System Access API
+    }
+  }
+
   try {
     if (fileHandle && fileHandle.createWritable) {
       const w = await fileHandle.createWritable();

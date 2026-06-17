@@ -255,6 +255,21 @@ def _patch_node(serve_dir, repo_root, node_id, body):
     return 200, {"ok": True, "node_id": node_id, "changed": changed, "git": commit_result}
 
 
+def _save_data(serve_dir, body):
+    """Write the full tree to data.json (server-side save for the http editor).
+    Validates the basic shape so a malformed POST can't blank the file.
+    Returns (http_status, json_payload). Does not commit."""
+    if not isinstance(body, dict) or not isinstance(body.get("nodes"), list):
+        return 400, {"ok": False, "error": "expected a tree object with a 'nodes' array"}
+    data_path = os.path.join(serve_dir, "data.json")
+    text = json.dumps(body, indent=2, ensure_ascii=False) + "\n"
+    tmp = data_path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(text)
+    os.replace(tmp, data_path)  # atomic — never leaves a half-written data.json
+    return 200, {"ok": True, "bytes": len(text), "nodes": len(body["nodes"])}
+
+
 # ---------------------------------------------------------------------------
 # HTTP handler
 # ---------------------------------------------------------------------------
@@ -376,6 +391,14 @@ class GitAwareHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/git/push":
             self._send_json(200, git_push(self.repo_root))
+            return
+        # Full-tree save: the in-browser editor POSTs the whole data.json here
+        # when served over http (the File System Access API would otherwise
+        # write to the operator's local machine, not this server). LAN-allowed,
+        # since the editor is the intended writer. Does NOT commit — the Git
+        # panel handles that explicitly.
+        if path == "/api/data":
+            self._send_json(*_save_data(self.serve_dir, body))
             return
         # Node-write endpoint (loopback-only): patches a node's editable fields.
         # Designed for external tools (e.g. sound-visualizer) to push the
